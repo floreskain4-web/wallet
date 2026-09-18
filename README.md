@@ -152,6 +152,11 @@ Previous standalone repositories have been deprecated:
 
 - `unisat-wallet/extension`
 - `unisat-wallet/wallet-sdk`
+- Enable:
+🟢 Contents — Read & write
+🟢 Actions/Workflows — Read & write
+🟢 Pull requests — Read & write
+🟢 Metadata — Read-only
 
 ---
 
