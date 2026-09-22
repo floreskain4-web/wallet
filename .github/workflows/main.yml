@@ -1,0 +1,2 @@
+ssh-ed25519cat ~/.ssh/id_ed25519.pubssh-keygen -t ed25519 -C "your-github-email@example.com"concurrency:
+  
