@@ -5,11 +5,14 @@ import { Button, Checkbox, Column, Content, Header, Icon, Input, Layout, Row, Te
 import BRC20Preview from '@/ui/components/BRC20Preview';
 import { BRC20Ticker } from '@/ui/components/BRC20Ticker';
 import { FeeRateBar } from '@/ui/components/FeeRateBar';
+import { RBFBar } from '@/ui/components/RBFBar';
 import { RefreshButton } from '@/ui/components/RefreshButton';
 import { TabBar } from '@/ui/components/TabBar';
 import { TickUsdWithoutPrice, TokenType } from '@/ui/components/TickUsd';
 import { fontSizes } from '@/ui/theme/font';
 import { showLongNumber } from '@/ui/utils';
+import { getUiType } from '@/ui/web';
+import { TokenBalance } from '@unisat/wallet-shared';
 import {
   BRC20SendStepParams,
   BRC20SendTabKey,
@@ -19,11 +22,10 @@ import {
   useBRC20SendScreenLogicStep3,
   useI18n,
   useNavigation,
-  useTransferableListLogic
+  useTransferableListLogic,
+  useWallet
 } from '@unisat/wallet-state';
 
-import { getUiType } from '@/ui/web';
-import { TokenBalance } from '@unisat/wallet-shared';
 import { SignPsbt } from '../Approval/components';
 
 function Step1({ contextData, updateContextData }: BRC20SendStepParams) {
@@ -37,7 +39,7 @@ function Step1({ contextData, updateContextData }: BRC20SendStepParams) {
             <TransferableList contextData={contextData} updateContextData={updateContextData} />
           </Column>
 
-          <Row justifyCenter mt="xxl">
+          <Row justifyCenter>
             <Column style={{ width: '100%' }}>
               <InscribeTransferButton tokenBalance={tokenBalance} />
             </Column>
@@ -79,7 +81,7 @@ const InscribeTransferButton = ({ tokenBalance }: { tokenBalance: TokenBalance }
             </div>
           </Row>
           <Row style={{ width: '100%' }} justifyBetween>
-            <Text text={t('available')} color="textDim" size="sm" />
+            <Text text={t('available')} preset="regular" size="sm" />
             <Row itemsCenter gap="sm">
               <Text text={`${tokenBalance.availableBalanceSafe}  `} color="white" preset="bold" digital />
               {!isSafeBalanceZero && (
@@ -188,12 +190,13 @@ function TransferableList({ contextData, updateContextData }: BRC20SendStepParam
 
 function Step2({ contextData, updateContextData }: BRC20SendStepParams) {
   const { t, disabled, onStep2ClickNext } = useBRC20SendScreenLogicStep2({ contextData, updateContextData });
+  const wallet = useWallet();
   return (
     <Content mt="lg">
       <Column full>
         <Column>
           <Row justifyBetween>
-            <Text text={t('send')} color="textDim" />
+            <Text text={t('send')} preset="regular" />
             <TickUsdWithoutPrice
               tick={contextData.tokenBalance.ticker}
               balance={contextData.transferAmount}
@@ -223,6 +226,15 @@ function Step2({ contextData, updateContextData }: BRC20SendStepParams) {
         </Column>
         <Column>
           <FeeRateBar />
+        </Column>
+        <Column mt="lg">
+          <RBFBar
+            value={contextData.enableRBF}
+            onChange={(val) => {
+              updateContextData({ enableRBF: val });
+              wallet.setEnableRBF(val);
+            }}
+          />
         </Column>
       </Column>
 

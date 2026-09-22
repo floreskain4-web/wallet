@@ -121,6 +121,16 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
         window.open(url);
       },
 
+      navToExplorerInscription: (inscriptionId: string) => {
+        let url = '';
+        if (chain.unisatExplorerUrl) {
+          url = `${chain.unisatExplorerUrl}/inscription/${inscriptionId}`;
+        } else {
+          url = `${chain.ordinalsUrl}/inscription/${inscriptionId}`;
+        }
+        window.open(url);
+      },
+
       navToMarketPlace() {
         const url = `${chain.unisatUrl}/market`;
         window.open(url);

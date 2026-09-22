@@ -69,6 +69,34 @@ describe('PermissionService', () => {
       expect(site).toBeDefined()
       expect(site?.name).toBe('Example')
     })
+
+    it('should respect autoSync config', async () => {
+      const storage = createMockStorage()
+      const newService = new PermissionService()
+      await newService.init({
+        storage: storage as any,
+        autoSync: true,
+      })
+
+      await newService.addConnectedSite(
+        'https://autosync.com',
+        'Auto Sync',
+        'icon.png',
+        ChainType.BITCOIN_MAINNET
+      )
+
+      expect(storage.set).toHaveBeenCalledWith(
+        'permission',
+        expect.objectContaining({
+          dumpCache: expect.arrayContaining([
+            expect.objectContaining({
+              k: 'https://autosync.com',
+            }),
+          ]),
+        })
+      )
+    })
+
   })
 
   describe('addConnectedSite', () => {
@@ -160,7 +188,18 @@ describe('PermissionService', () => {
       expect(service.hasPermission('https://unknown.com')).toBe(false)
     })
 
-    it('should return true for internal origin', () => {
+    it('should return false for an unconnected UniSat origin', () => {
+      expect(service.hasPermission('https://unisat.io')).toBe(false)
+    })
+
+    it('should return true for the UniSat origin after connection approval', async () => {
+      await service.addConnectedSite(
+        'https://unisat.io',
+        'UniSat',
+        'icon.png',
+        ChainType.BITCOIN_MAINNET
+      )
+
       expect(service.hasPermission('https://unisat.io')).toBe(true)
     })
 
@@ -215,7 +254,7 @@ describe('PermissionService', () => {
       expect(site?.chain).toBe(ChainType.BITCOIN_TESTNET)
     })
 
-    it('should not update internal origin', async () => {
+    it('should update the UniSat origin when connected', async () => {
       await service.addConnectedSite(
         'https://unisat.io',
         'UniSat',
@@ -229,7 +268,7 @@ describe('PermissionService', () => {
       )
 
       const site = service.getSite('https://unisat.io')
-      expect(site?.name).toBe('UniSat')
+      expect(site?.name).toBe('Changed')
     })
   })
 
@@ -442,16 +481,6 @@ describe('PermissionService', () => {
     })
   })
 
-  describe('isInternalOrigin', () => {
-    it('should return true for internal origin', () => {
-      expect(service.isInternalOrigin('https://unisat.io')).toBe(true)
-    })
-
-    it('should return false for external origin', () => {
-      expect(service.isInternalOrigin('https://example.com')).toBe(false)
-    })
-  })
-
   describe('setRecentConnectedSites', () => {
     it('should set sites order', async () => {
       await service.addConnectedSite(
@@ -493,7 +522,7 @@ describe('PermissionService', () => {
       await expect(service.touchConnectedSite('https://test.com')).resolves.not.toThrow()
     })
 
-    it('should skip internal origin', async () => {
+    it('should not throw for an unconnected site', async () => {
       await expect(service.touchConnectedSite('https://unisat.io')).resolves.not.toThrow()
     })
   })

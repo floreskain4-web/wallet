@@ -2,7 +2,7 @@ import { bnUtils } from '@unisat/base-utils'
 import { Inscription } from '@unisat/wallet-shared'
 import BigNumber from 'bignumber.js'
 import { useEffect, useMemo, useState } from 'react'
-import { useI18n, useNavigation, useTools } from 'src/context'
+import { useI18n, useNavigation, useTools, useWallet } from 'src/context'
 import {
   useCurrentAccount,
   useFeeRateBar,
@@ -42,6 +42,7 @@ export function useSendRunesScreenLogic() {
 
   const currentAccount = useCurrentAccount()
   const [outputValue, setOutputValue] = useState(defaultOutputValue)
+  const [enableRBF, setEnableRBF] = useState(true)
   const minOutputValue = useMemo(() => {
     if (toInfo.address) {
       const dust1 = getAddressUtxoDust(currentAccount.address)
@@ -53,6 +54,7 @@ export function useSendRunesScreenLogic() {
   }, [toInfo.address, currentAccount.address])
 
   const fetchUtxos = useFetchUtxosCallback()
+  const wallet = useWallet()
 
   const fetchAssetUtxosRunes = useFetchAssetUtxosRunesCallback()
   const tools = useTools()
@@ -82,6 +84,12 @@ export function useSendRunesScreenLogic() {
   const prepareSendRunes = usePrepareSendRunesCallback()
 
   const { feeRate } = useFeeRateBar()
+
+  useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      setEnableRBF(enableRBF)
+    })
+  }, [wallet])
 
   useEffect(() => {
     setError('')
@@ -130,6 +138,12 @@ export function useSendRunesScreenLogic() {
   const onClickBack = () => {
     nav.goBack()
   }
+
+  const onEnableRBFChange = (value: boolean) => {
+    setEnableRBF(value)
+    wallet.setEnableRBF(value)
+  }
+
   const onClickNext = () => {
     const runeAmount = bnUtils.fromDecimalAmount(inputAmount, runeInfo.divisibility)
     prepareSendRunes({
@@ -138,6 +152,7 @@ export function useSendRunesScreenLogic() {
       runeAmount: runeAmount,
       outputValue: outputValue,
       feeRate,
+      enableRBF,
     })
       .then(toSignData => {
         nav.navigate('TxConfirmScreen', { toSignData })
@@ -163,6 +178,8 @@ export function useSendRunesScreenLogic() {
     defaultOutputValue,
     minOutputValue,
     setOutputValue,
+    enableRBF,
+    setEnableRBF: onEnableRBFChange,
     t,
 
     // actions

@@ -12,7 +12,6 @@ export function AlkanesCollectionList({ showHeader = false }: { showHeader?: boo
     <Column>
       {showHeader ? (
         <Text
-          mx="md"
           text={`${t('alkanes_collections')} (${Math.max(total, 0)})`}
           size="sm"
           color="white_muted"

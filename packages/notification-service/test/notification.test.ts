@@ -1,15 +1,16 @@
-import { StoredNotification } from '@unisat/wallet-shared'
+import { AnnouncementLinkType, StoredNotification } from '@unisat/wallet-shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NotificationService } from '../src/notification-service'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function makeItem(overrides?: Partial<StoredNotification>) {
+function makeItem(overrides?: Partial<StoredNotification>): StoredNotification {
   return {
     id: 'n1',
     title: 'Test',
     content: 'Content',
     type: 'info',
+    linkType: AnnouncementLinkType.NONE,
     priority: 1,
     publishTime: 1000,
     ...overrides,

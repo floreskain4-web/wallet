@@ -6,8 +6,12 @@ import { Column } from '../Column';
 import { Row } from '../Row';
 import Tag from '../Tag';
 import { Text } from '../Text';
+import {
+  getTokenBalanceCardStyle,
+  TOKEN_BALANCE_CARD_PADDING_Y,
+  TokenBalanceCardLayout
+} from '../TokenBalanceCardLayout';
 import { TokenBalanceIcon } from '../TokenBalanceIcon';
-import { TokenBalancePrice } from '../TokenBalancePrice';
 
 export default function BRC20BalanceCard(props: BRC20BalanceCardProps) {
   const {
@@ -18,87 +22,87 @@ export default function BRC20BalanceCard(props: BRC20BalanceCardProps) {
     displayName,
     tag,
     onClick,
+
     totalBalance,
-    selfMint,
-    onProgBalance,
-    hasOutWalletBalance,
     inWalletBalance,
     onSwapBalance,
+    onProgBalance,
+
+    displayTotalBalance,
+    displayInWalletBalance,
+    displayOnSwapBalance,
+    displayOnProgBalance,
+
+    selfMint,
+    hasOutWalletBalance,
     t
   } = useBRC20BalanceCardLogic(props);
 
+  const adaptiveHeight = Boolean(hasOutWalletBalance || tag || selfMint);
+
   return (
     <Card
-      style={{
-        backgroundColor: '#1E1F24',
-        borderColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 12
-      }}
       fullX
       onClick={() => {
         onClick && onClick();
-      }}>
-      <Column full py="zero" gap="zero">
-        <Row fullY justifyBetween justifyCenter>
-          <Column onClick={onClick}>
-            <TokenBalanceIcon iconInfo={iconInfo} />
-          </Column>
+      }}
+      style={getTokenBalanceCardStyle(adaptiveHeight)}>
+      <TokenBalanceCardLayout
+        icon={<TokenBalanceIcon iconInfo={iconInfo} />}
+        onIconClick={onClick}
+        title={<BRC20Ticker tick={ticker} displayName={displayName} truncate />}
+        titleExtra={
+          tag || selfMint ? (
+            <>
+              {tag ? <Tag type={tag} /> : null}
+              {selfMint ? <Tag type="self-issuance" small /> : null}
+            </>
+          ) : null
+        }
+        quantity={<Text text={displayTotalBalance} size="xs" digital />}
+        showPrice={showPrice}
+        price={price}
+        balance={totalBalance}
+      />
 
-          <Column justifyCenter style={{ marginRight: 'auto' }} gap="zero" fullX>
-            <Row justifyBetween itemsCenter fullY gap="zero">
-              <BRC20Ticker tick={ticker} displayName={displayName} />
-              <Text text={totalBalance} size="xs" digital />
+      {hasOutWalletBalance ? (
+        <Column fullX style={{ gap: TOKEN_BALANCE_CARD_PADDING_Y }}>
+          <Row style={{ borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }} />
+          <Row fullY justifyBetween justifyCenter>
+            <Column fullY justifyCenter>
+              <Text text={t('brc20_in_wallet')} color="textDim" size="xs" />
+            </Column>
+
+            <Row itemsCenter fullY gap="zero">
+              <Text text={displayInWalletBalance} size="xs" digital />
             </Row>
-            {(tag || selfMint) && (
-              <Row>
-                {tag && <Tag type={tag} />}
-                {selfMint && <Tag type="self-issuance" small />}
-              </Row>
-            )}
-          </Column>
-        </Row>
+          </Row>
 
-        <TokenBalancePrice showPrice={showPrice} price={price} balance={totalBalance} />
-
-        {hasOutWalletBalance ? (
-          <Column>
-            <Row style={{ borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }} mt="sm" />
+          {onSwapBalance && onSwapBalance !== '0' ? (
             <Row fullY justifyBetween justifyCenter>
               <Column fullY justifyCenter>
-                <Text text={t('brc20_in_wallet')} color="textDim" size="xs" />
+                <Text text={t('brc20_on_swap')} color="textDim" size="xs" />
               </Column>
 
               <Row itemsCenter fullY gap="zero">
-                <Text text={inWalletBalance} size="xs" digital />
+                <Text text={displayOnSwapBalance} size="xs" digital />
               </Row>
             </Row>
+          ) : null}
 
-            {onSwapBalance && onSwapBalance !== '0' ? (
-              <Row fullY justifyBetween justifyCenter>
-                <Column fullY justifyCenter>
-                  <Text text={t('brc20_on_swap')} color="textDim" size="xs" />
-                </Column>
+          {onProgBalance && onProgBalance !== '0' ? (
+            <Row fullY justifyBetween justifyCenter>
+              <Column fullY justifyCenter>
+                <Text text={t('brc20_on_prog')} color="textDim" size="xs" />
+              </Column>
 
-                <Row itemsCenter fullY gap="zero">
-                  <Text text={onSwapBalance} size="xs" digital />
-                </Row>
+              <Row itemsCenter fullY gap="zero">
+                <Text text={displayOnProgBalance} size="xs" digital />
               </Row>
-            ) : null}
-
-            {onProgBalance && onProgBalance !== '0' ? (
-              <Row fullY justifyBetween justifyCenter>
-                <Column fullY justifyCenter>
-                  <Text text={t('brc20_on_prog')} color="textDim" size="xs" />
-                </Column>
-
-                <Row itemsCenter fullY gap="zero">
-                  <Text text={onProgBalance} size="xs" digital />
-                </Row>
-              </Row>
-            ) : null}
-          </Column>
-        ) : null}
-      </Column>
+            </Row>
+          ) : null}
+        </Column>
+      ) : null}
     </Card>
   );
 }

@@ -23,11 +23,6 @@ export function useOrdinalsAssetTabKey() {
   return uiState.ordinalsAssetTabKey
 }
 
-export function useCATAssetTabKey() {
-  const uiState = useUIState()
-  return uiState.catAssetTabKey
-}
-
 export function useAlkanesAssetTabKey() {
   const uiState = useUIState()
   return uiState.alkanesAssetTabKey
@@ -45,20 +40,26 @@ export function useUiTxCreateScreen() {
 
 export function useUpdateUiTxCreateScreen() {
   const dispatch = useAppDispatch()
-  return ({
-    toInfo,
-    inputAmount,
-  }: {
-    toInfo?: { address: string; domain: string; inscription?: Inscription }
-    inputAmount?: string
-  }) => {
-    dispatch(
-      (uiActions as any).updateTxCreateScreen({
-        toInfo,
-        inputAmount,
-      })
-    )
-  }
+  return useCallback(
+    ({
+      toInfo,
+      inputAmount,
+      enableRBF,
+    }: {
+      toInfo?: { address: string; domain: string; inscription?: Inscription }
+      inputAmount?: string
+      enableRBF?: boolean
+    }) => {
+      dispatch(
+        (uiActions as any).updateTxCreateScreen({
+          toInfo,
+          inputAmount,
+          enableRBF,
+        })
+      )
+    },
+    [dispatch]
+  )
 }
 
 export function useFeeRateBar() {
@@ -68,36 +69,39 @@ export function useFeeRateBar() {
 
 export function useUpdateFeeRateBar() {
   const dispatch = useAppDispatch()
-  return ({
-    feeRate,
-    feeRateInputVal,
-    enableLowFeeRate,
-    feeOptionIndex,
-    showCustomInput,
-  }: {
-    feeRate?: number
-    feeRateInputVal?: string
-    enableLowFeeRate?: boolean
-    feeOptionIndex?: number
-    showCustomInput?: boolean
-  }) => {
-    dispatch(
-      (uiActions as any).updateFeeRateBar({
-        feeRate,
-        feeRateInputVal,
-        enableLowFeeRate,
-        feeOptionIndex,
-        showCustomInput,
-      })
-    )
-  }
+  return useCallback(
+    ({
+      feeRate,
+      feeRateInputVal,
+      enableLowFeeRate,
+      feeOptionIndex,
+      showCustomInput,
+    }: {
+      feeRate?: number
+      feeRateInputVal?: string
+      enableLowFeeRate?: boolean
+      feeOptionIndex?: number
+      showCustomInput?: boolean
+    }) => {
+      dispatch(
+        (uiActions as any).updateFeeRateBar({
+          feeRate,
+          feeRateInputVal,
+          enableLowFeeRate,
+          feeOptionIndex,
+          showCustomInput,
+        })
+      )
+    },
+    [dispatch]
+  )
 }
 
 export function useResetFeeRateBar() {
   const dispatch = useAppDispatch()
-  return () => {
+  return useCallback(() => {
     dispatch((uiActions as any).resetFeeRateBar())
-  }
+  }, [dispatch])
 }
 
 export function useAddressInput() {
@@ -107,21 +111,24 @@ export function useAddressInput() {
 
 export function useUpdateAddressInput() {
   const dispatch = useAppDispatch()
-  return ({ address, domain }: { address?: string; domain?: string }) => {
-    dispatch(
-      (uiActions as any).updateAddressInput({
-        address,
-        domain,
-      })
-    )
-  }
+  return useCallback(
+    ({ address, domain }: { address?: string; domain?: string }) => {
+      dispatch(
+        (uiActions as any).updateAddressInput({
+          address,
+          domain,
+        })
+      )
+    },
+    [dispatch]
+  )
 }
 
 export function useResetAddressInput() {
   const dispatch = useAppDispatch()
-  return () => {
+  return useCallback(() => {
     dispatch((uiActions as any).resetAddressInput())
-  }
+  }, [dispatch])
 }
 
 export function useAmountInput() {
@@ -131,35 +138,38 @@ export function useAmountInput() {
 
 export function useUpdateAmountInput() {
   const dispatch = useAppDispatch()
-  return ({ amount }: { amount?: string }) => {
-    dispatch(
-      (uiActions as any).updateAmountInput({
-        amount,
-      })
-    )
-  }
+  return useCallback(
+    ({ amount }: { amount?: string }) => {
+      dispatch(
+        (uiActions as any).updateAmountInput({
+          amount,
+        })
+      )
+    },
+    [dispatch]
+  )
 }
 
 export function useResetAmountInput() {
   const dispatch = useAppDispatch()
-  return () => {
+  return useCallback(() => {
     dispatch((uiActions as any).resetAmountInput())
-  }
+  }, [dispatch])
 }
 
 export function useResetTxState() {
   const dispatch = useAppDispatch()
-  return () => {
+  return useCallback(() => {
     dispatch((uiActions as any).resetTxCreateScreen())
     dispatch((uiActions as any).resetFeeRateBar())
-  }
+  }, [dispatch])
 }
 
 export function useResetUiTxCreateScreen() {
   const dispatch = useAppDispatch()
-  return () => {
+  return useCallback(() => {
     dispatch((uiActions as any).resetTxCreateScreen())
-  }
+  }, [dispatch])
 }
 
 export const useThrottle = (callback, delay, lastCallRef) => {
@@ -185,7 +195,6 @@ export function getSupportedAssets(chainType: ChainType, address: string) {
   const assets = {
     ordinals: false,
     runes: false,
-    CAT20: false,
     alkanes: false,
     brc20Prog: false,
   }
@@ -195,15 +204,6 @@ export function getSupportedAssets(chainType: ChainType, address: string) {
 
   assets.runes = true
   assetTabKeys.push(AssetTabKey.RUNES)
-
-  if (
-    (chainType === ChainType.FRACTAL_BITCOIN_MAINNET ||
-      chainType === ChainType.FRACTAL_BITCOIN_TESTNET) &&
-    (addressType == AddressType.P2TR || addressType == AddressType.P2WPKH)
-  ) {
-    assets.CAT20 = true
-    assetTabKeys.push(AssetTabKey.CAT)
-  }
 
   if (chainType === ChainType.BITCOIN_MAINNET || chainType === ChainType.BITCOIN_SIGNET) {
     assets.alkanes = true
@@ -284,18 +284,6 @@ export function useAlkanesIconInfo(name: string, alkaneid: string) {
   return { iconUrl: '', iconShortName }
 }
 
-export function useCAT20IconInfo(name: string, tokenId: string) {
-  const baseUrl = useIconBaseUrl()
-  const iconUrl = `${baseUrl}/cat20/${name}/${tokenId}`
-  const iconShortName = name.substring(0, 2)
-  const chainType = useChainType()
-  if (chainType === ChainType.BITCOIN_MAINNET || chainType === ChainType.FRACTAL_BITCOIN_MAINNET) {
-    return { iconUrl, iconShortName }
-  }
-
-  return { iconUrl: '', iconShortName }
-}
-
 export function useBRC20MarketPlaceWebsite(ticker: string) {
   const chainType = useChainType()
   const unisatWebsite = useUnisatWebsite()
@@ -315,11 +303,6 @@ export function useRunesMarketUrl(ticker: string) {
 export function useAlkanesMarketPlaceWebsite(alkaneid: string) {
   const unisatWebsite = useUnisatWebsite()
   return `${unisatWebsite}/alkanes/market?tick=${alkaneid}`
-}
-
-export function useCAT20MarketPlaceWebsite(tokenId: string) {
-  const unisatWebsite = useUnisatWebsite()
-  return `${unisatWebsite}/dex/cat20/${tokenId}`
 }
 
 export function useRunesInscribeUrl(rune: string) {

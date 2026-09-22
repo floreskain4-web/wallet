@@ -19,9 +19,6 @@ export * from './brc20'
 // Runes protocol types
 export * from './runes'
 
-// CAT20/CAT721 protocol types
-export * from './cat'
-
 // Alkanes protocol types
 export * from './alkanes'
 

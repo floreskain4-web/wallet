@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Button, Card, Column, Content, Header, Icon, Input, Layout, Row, Text } from '@/ui/components';
+import { Button, Column, Content, Header, Icon, Input, Layout, Row, Text, TransferAmountCard, TransferAmountSection } from '@/ui/components';
 import { FeeOptionsPopover } from '@/ui/components/FeeOptionsPopover';
 import { FeeSettings } from '@/ui/components/FeeOptionsPopover/interface';
 import { useNavigate } from '@/ui/pages/MainRoute';
@@ -415,81 +415,51 @@ export default function SendBabyScreen() {
         </Column>
 
         <Column mt="md">
-          <Row justifyBetween>
-            <Text text={t('transfer_amount')} preset="regular" />
-          </Row>
-          <Input
-            preset="amount"
-            placeholder={t('amount')}
-            value={inputAmount}
-            runesDecimal={babylonChain.stakeCurrency.coinDecimals}
-            onAmountInputChange={(amount) => {
-              setInputAmount(amount);
-            }}
-            enableMax={true}
-            onMaxClick={() => {
-              const amountToUse =
-                parseFloat(maxAmount) <= 0 || parseFloat(maxAmount) < parseFloat(availableAmount)
-                  ? availableAmount
-                  : maxAmount;
-              setInputAmount(amountToUse);
-            }}
-          />
-          <Card
-            style={{
-              flexDirection: 'column',
-              borderRadius: 8,
-              padding: '8px 12px'
-            }}
-            gap="xs">
-            <Row
-              justifyBetween
-              fullX
-              itemsCenter
-              style={{
-                minHeight: 24
-              }}>
-              <Text text={t('available')} color="gold" />
-              <Row justifyEnd itemsCenter>
-                {summaryLoading ? (
-                  <Text text={t('loading')} size="sm" color="gold" />
-                ) : (
-                  <>
-                    <Text text={`${availableAmount}`} size="sm" color="gold" />
-                    <Icon
-                      icon="history"
-                      size={14}
-                      color="gold"
-                      style={{ marginLeft: 4, cursor: 'pointer' }}
-                      onClick={async () => {
-                        setSummaryLoading(true);
-                        try {
-                          const summary = await wallet.getBabylonAddressSummary(babylonChainId);
-                          setBabylonAddressSummary(summary);
-                          simulateTransaction();
-                        } catch (e) {
-                          console.error('Error refreshing balance:', e);
-                        } finally {
-                          setSummaryLoading(false);
-                        }
-                      }}
-                    />
-                  </>
-                )}
-                <Text text={babylonChain.stakeCurrency.coinDenom} size="sm" color="white" />
-              </Row>
-            </Row>
-            <Row
-              justifyBetween
-              fullX
-              itemsCenter
-              style={{
-                minHeight: 20
-              }}>
-              <Row />
-              <Text text={babylonChain.chainName} size="sm" color="textDim" />
-            </Row>
-          </Card>
+          <TransferAmountSection>
+            <TransferAmountCard
+              amount={inputAmount}
+              onAmountChange={setInputAmount}
+              showMax
+              onMaxClick={() => {
+                const amountToUse =
+                  parseFloat(maxAmount) <= 0 || parseFloat(maxAmount) < parseFloat(availableAmount)
+                    ? availableAmount
+                    : maxAmount;
+                setInputAmount(amountToUse);
+              }}
+              availableAmount={summaryLoading ? t('loading') : availableAmount}
+              unit={babylonChain.stakeCurrency.coinDenom}
+              runesDecimal={babylonChain.stakeCurrency.coinDecimals}
+              availableExtra={
+                summaryLoading ? null : (
+                  <Icon
+                    icon="history"
+                    size={14}
+                    color="gold"
+                    style={{ marginLeft: 4, cursor: 'pointer' }}
+                    onClick={async () => {
+                      setSummaryLoading(true);
+                      try {
+                        const summary = await wallet.getBabylonAddressSummary(babylonChainId);
+                        setBabylonAddressSummary(summary);
+                        simulateTransaction();
+                      } catch (e) {
+                        console.error('Error refreshing balance:', e);
+                      } finally {
+                        setSummaryLoading(false);
+                      }
+                    }}
+                  />
+                )
+              }
+              footer={
+                <Row justifyBetween fullX itemsCenter style={{ minHeight: 20, marginTop: 8 }}>
+                  <Row />
+                  <Text text={babylonChain.chainName} size="xs" color="textDim" />
+                </Row>
+              }
+            />
+          </TransferAmountSection>
         </Column>
 
         <Column mt="md">

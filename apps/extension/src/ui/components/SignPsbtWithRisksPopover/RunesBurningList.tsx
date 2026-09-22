@@ -1,15 +1,13 @@
 import BigNumber from 'bignumber.js';
 
-import { colors } from '@/ui/theme/colors';
 import { bnUtils } from '@unisat/base-utils';
 import { useI18n } from '@unisat/wallet-state';
 
 import { DecodedPsbt } from '@unisat/wallet-shared';
-import { Column } from '../Column';
 import { Icon } from '../Icon';
-import { Popover } from '../Popover';
 import { Row } from '../Row';
 import { Text } from '../Text';
+import { RiskDetailPopover, riskAssetCardStyle } from './RiskDetailPopover';
 
 export const RunesBurningList = ({ decodedPsbt, onClose }: { decodedPsbt: DecodedPsbt; onClose: () => void }) => {
   const inputTokenMap: {
@@ -87,45 +85,25 @@ export const RunesBurningList = ({ decodedPsbt, onClose }: { decodedPsbt: Decode
   });
 
   return (
-    <Popover>
-      <Column justifyCenter itemsCenter>
-        <Row fullX justifyBetween>
-          <Row />
-          <Text text={t('runes_burn_risk_list')} preset="bold" />
-          <Icon
-            icon="close"
-            onClick={() => {
-              onClose();
-            }}
-          />
-        </Row>
-
-        <Row fullX style={{ borderBottomWidth: 1, borderColor: colors.border }} />
-
-        {burnList.map((burn, index) => {
-          return (
-            <Row
-              key={'runes_burn_' + index}
-              justifyBetween
-              fullX
-              px="md"
-              py="xl"
-              style={{
-                backgroundColor: '#1e1a1e',
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: '#442326'
-              }}>
-              <Row>
-                <Icon icon="burn" color="red" />
-                <Text text={burn.spacedRune} />
-              </Row>
-
-              <Text text={`${bnUtils.toDecimalAmount(burn.amount, burn.divisibility)} ${burn.symbol}`} />
+    <RiskDetailPopover title={t('runes_burn_risk_list')} onClose={onClose}>
+      {burnList.map((burn, index) => {
+        return (
+          <Row
+            key={'runes_burn_' + index}
+            justifyBetween
+            fullX
+            px="md"
+            py="xl"
+            style={riskAssetCardStyle}>
+            <Row>
+              <Icon icon="burn" color="red" />
+              <Text text={burn.spacedRune} />
             </Row>
-          );
-        })}
-      </Column>
-    </Popover>
+
+            <Text text={`${bnUtils.toDecimalAmount(burn.amount, burn.divisibility)} ${burn.symbol}`} />
+          </Row>
+        );
+      })}
+    </RiskDetailPopover>
   );
 };

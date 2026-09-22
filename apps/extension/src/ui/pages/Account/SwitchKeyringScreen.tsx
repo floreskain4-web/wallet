@@ -32,6 +32,7 @@ interface MyItemProps {
 }
 
 const ITEM_HEIGHT = 64;
+const PRIVATE_KEY_EXPORTABLE_KEYRING_TYPES = [KeyringType.HdKeyring, KeyringType.SimpleKeyring];
 
 export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
   if (!keyring) {
     return <div style={{ height: ITEM_HEIGHT }} />;
   }
+  const canExportPrivateKey = PRIVATE_KEY_EXPORTABLE_KEYRING_TYPES.includes(keyring.type as KeyringType);
 
   const displayAddress = useMemo(() => {
     if (!keyring.accounts[0]) {
@@ -73,7 +75,8 @@ export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
         marginLeft: 10,
         marginRight: 10
       }}
-      data-testid={`wallet-item-${keyring.key}`}>
+      data-testid={`wallet-item-${keyring.key}`}
+    >
       <Row
         full
         onClick={async (e) => {
@@ -88,7 +91,8 @@ export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
             dispatch(accountActions.setCurrent(_currentAccount));
           }
           if (autoNav) navigate('MainScreen');
-        }}>
+        }}
+      >
         <Column style={{ width: 20 }} selfItemsCenter>
           {selected ? <Icon icon="circle-check" color="gold" /> : <Icon icon="circle-check" color="white_muted2" />}
         </Column>
@@ -122,7 +126,8 @@ export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
                   height: 20,
                   display: 'flex',
                   alignItems: 'center'
-                }}>
+                }}
+              >
                 {t('linked_to_unisat_cold_wallet')}
               </div>
             )}
@@ -146,13 +151,15 @@ export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
             }}
             onMouseDown={(e) => {
               setOptionsVisible(false);
-            }}></div>
+            }}
+          ></div>
         )}
 
         <Icon
           onClick={async (e) => {
             setOptionsVisible(!optionsVisible);
-          }}>
+          }}
+        >
           <SettingOutlined />
         </Icon>
 
@@ -165,12 +172,14 @@ export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
               right: 0,
               padding: 5,
               zIndex: 10
-            }}>
+            }}
+          >
             <Column>
               <Row
                 onClick={() => {
                   navigate('EditWalletNameScreen', { keyring });
-                }}>
+                }}
+              >
                 <EditOutlined />
                 <Text text={t('edit_name')} size="sm" />
               </Row>
@@ -179,31 +188,33 @@ export function MyItem({ keyring, autoNav }: MyItemProps, ref) {
                 <Row
                   onClick={() => {
                     navigate('ExportMnemonicsScreen', { keyring });
-                  }}>
+                  }}
+                >
                   <KeyOutlined />
                   <Text text={t('show_secret_recovery_phrase')} size="sm" />
                 </Row>
               )}
-              {keyring.type !== KeyringType.HdKeyring &&
-                keyring.type !== KeyringType.KeystoneKeyring &&
-                keyring.type !== KeyringType.ColdWalletKeyring && (
-                  <Row
-                    onClick={() => {
-                      navigate('ExportPrivateKeyScreen', { account: keyring.accounts[0] });
-                    }}>
-                    <KeyOutlined />
-                    <Text text={t('export_private_key')} size="sm" />
-                  </Row>
-                )}
+              {canExportPrivateKey && (
+                <Row
+                  onClick={() => {
+                    navigate('ExportPrivateKeyScreen', { account: keyring.accounts[0] });
+                  }}
+                >
+                  <KeyOutlined />
+                  <Text text={t('export_private_key')} size="sm" />
+                </Row>
+              )}
               <Row
                 onClick={() => {
+                  // TODO: Treat corrupted keyrings separately in this "last wallet" check.
                   if (keyrings.length == 1) {
                     tools.toastError(t('removing_the_last_wallet_is_not_allowed'));
                     return;
                   }
                   setRemoveVisible(true);
                   setOptionsVisible(false);
-                }}>
+                }}
+              >
                 <Icon color="danger">
                   <DeleteOutlined />
                 </Icon>
@@ -280,7 +291,8 @@ export default function SwitchKeyringScreen() {
             onClick={() => {
               navigate('AddKeyringScreen');
             }}
-            data-testid="add-wallet-button">
+            data-testid="add-wallet-button"
+          >
             <PlusCircleOutlined />
           </Icon>
         }
@@ -295,7 +307,8 @@ export default function SwitchKeyringScreen() {
           itemKey={(item) => item.key}
           style={{
             boxSizing: 'border-box'
-          }}>
+          }}
+        >
           {(item, index) => <ForwardMyItem keyring={item.keyring} autoNav={true} />}
         </VirtualList>
       </Content>

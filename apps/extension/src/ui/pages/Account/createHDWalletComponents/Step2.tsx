@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, Column, Icon, Input, Row, Text } from '@/ui/components';
 import { AddressTypeCard2 } from '@/ui/components/AddressTypeCard';
@@ -9,15 +9,17 @@ import { satoshisToAmount } from '@/ui/utils';
 import { isValidHdPath } from '@/ui/utils/bitcoin-utils';
 import { LoadingOutlined } from '@ant-design/icons';
 import { ADDRESS_TYPES, RESTORE_WALLETS, RestoreWalletType, getAccountDerivationPath } from '@unisat/wallet-shared';
-import { useCreateAccountCallback, useI18n, useTools, useWallet } from '@unisat/wallet-state';
+import { useCreateAccountCallback, useCreatePreMnemonicAccountCallback, useI18n, useTools, useWallet } from '@unisat/wallet-state';
 import { AddressType } from '@unisat/wallet-types';
 
 export function Step2({
   contextData,
-  updateContextData
+  updateContextData,
+  clearSensitiveState
 }: {
   contextData: ContextData;
   updateContextData: (params: UpdateContextDataParams) => void;
+  clearSensitiveState: () => void;
 }) {
   const wallet = useWallet();
   const tools = useTools();
@@ -53,7 +55,7 @@ export function Step2({
           isUnisatLegacy: v.isUnisatLegacy
         };
       });
-  }, [contextData]);
+  }, [contextData.customHdPath, contextData.isRestore, contextData.restoreWalletType]);
 
   const allHdPathOptions = useMemo(() => {
     return ADDRESS_TYPES.map((v) => v)
@@ -81,8 +83,12 @@ export function Step2({
   const [error, setError] = useState('');
   const [pathError, setPathError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const previewRequestRef = useRef(0);
 
   const createAccount = useCreateAccountCallback();
+  const createAccountFromPreMnemonic = useCreatePreMnemonicAccountCallback();
   const navigate = useNavigate();
   const isMagicEden = contextData.restoreWalletType === RestoreWalletType.MAGIC_EDEN;
 
@@ -94,89 +100,132 @@ export function Step2({
     if (scannedGroups.length > 0) {
       const itemIndex = scannedGroups.findIndex((v) => v.address_arr.length > 0);
       const item = scannedGroups[itemIndex];
-      updateContextData({ addressType: item.type, addressTypeIndex: itemIndex });
+      if (item) {
+        updateContextData({ addressType: item.type, addressTypeIndex: itemIndex });
+      }
     } else {
       const option = hdPathOptions[recommendedTypeIndex];
-      updateContextData({ addressType: option.addressType, addressTypeIndex: recommendedTypeIndex });
-    }
-  }, [recommendedTypeIndex, scannedGroups]);
-
-  const generateAddress = async () => {
-    const addresses: string[] = [];
-    for (let i = 0; i < hdPathOptions.length; i++) {
-      const options = hdPathOptions[i];
-      try {
-        const keyring = await wallet.createTmpKeyringWithMnemonics(
-          contextData.mnemonics,
-          contextData.customHdPath || options.hdPath,
-          contextData.passphrase,
-          options.addressType,
-          1,
-          isMagicEden
-        );
-        // const address = keyring.accounts[0].address;
-        // addresses.push(address);
-        keyring.accounts.forEach((v) => {
-          addresses.push(v.address);
-        });
-      } catch (e) {
-        console.log(e);
-        setError((e as any).message);
-        return;
+      if (option) {
+        updateContextData({ addressType: option.addressType, addressTypeIndex: recommendedTypeIndex });
       }
     }
-    setPreviewAddresses(addresses);
-  };
+  }, [hdPathOptions, recommendedTypeIndex, scannedGroups, updateContextData]);
+
+  const generateAddress = useCallback(async () => {
+    const requestId = ++previewRequestRef.current;
+    setPreviewLoading(true);
+    setError('');
+    setPreviewAddresses([]);
+    setAddressAssets({});
+
+    try {
+      const keyrings = await Promise.all(
+        hdPathOptions.map((options) =>
+          contextData.isRestore
+            ? wallet.createTmpKeyringWithMnemonics(
+                contextData.mnemonics,
+                contextData.customHdPath || options.hdPath,
+                contextData.passphrase,
+                options.addressType,
+                1,
+                isMagicEden
+              )
+            : wallet.createTmpKeyringWithPreMnemonic(
+                contextData.customHdPath || options.hdPath,
+                contextData.passphrase,
+                options.addressType,
+                1,
+                isMagicEden
+              )
+        )
+      );
+      const addresses = keyrings.map((keyring) => keyring.accounts[0]?.address ?? '');
+
+      if (requestId === previewRequestRef.current) {
+        setPreviewAddresses(addresses);
+      }
+    } catch (e) {
+      if (requestId === previewRequestRef.current) {
+        setError((e as Error).message);
+      }
+    } finally {
+      if (requestId === previewRequestRef.current) {
+        setPreviewLoading(false);
+      }
+    }
+  }, [contextData.customHdPath, contextData.isRestore, contextData.mnemonics, contextData.passphrase, hdPathOptions, isMagicEden, wallet]);
 
   const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
-    generateAddress();
+    void generateAddress();
     setScanned(false);
-  }, [contextData.passphrase, contextData.customHdPath]);
+    return () => {
+      previewRequestRef.current++;
+    };
+  }, [generateAddress]);
 
-  const fetchAddressesBalance = async () => {
-    if (!contextData.isRestore) {
+  useEffect(() => {
+    if (!contextData.isRestore || previewAddresses.length === 0 || previewAddresses.some((address) => !address)) {
+      setLoading(false);
       return;
     }
 
-    const addresses = previewAddresses;
-    if (!addresses[0]) return;
+    let cancelled = false;
+    const fetchAddressesBalance = async () => {
+      setLoading(true);
+      try {
+        const balances = await wallet.getMultiAddressAssets(previewAddresses.join(','));
+        if (cancelled) {
+          return;
+        }
 
-    setLoading(true);
-    const balances = await wallet.getMultiAddressAssets(addresses.join(','));
-    setLoading(false);
-
-    const addressAssets: { [key: string]: { total_btc: string; satoshis: number; total_inscription: number } } = {};
-    let maxSatoshis = 0;
-    let recommended = 0;
-    for (let i = 0; i < addresses.length; i++) {
-      const address = addresses[i];
-      const balance = balances[i];
-      const satoshis = balance.totalSatoshis;
-      addressAssets[address] = {
-        total_btc: satoshisToAmount(balance.totalSatoshis),
-        satoshis,
-        total_inscription: balance.inscriptionCount
-      };
-      if (satoshis > maxSatoshis) {
-        maxSatoshis = satoshis;
-        recommended = i;
+        const assets: { [key: string]: { total_btc: string; satoshis: number; total_inscription: number } } = {};
+        let maxSatoshis = 0;
+        let recommended = 0;
+        for (let index = 0; index < previewAddresses.length; index++) {
+          const address = previewAddresses[index]!;
+          const balance = balances[index];
+          if (!balance) {
+            continue;
+          }
+          const satoshis = balance.totalSatoshis;
+          assets[address] = {
+            total_btc: satoshisToAmount(satoshis),
+            satoshis,
+            total_inscription: balance.inscriptionCount
+          };
+          if (satoshis > maxSatoshis) {
+            maxSatoshis = satoshis;
+            recommended = index;
+          }
+        }
+        setAddressAssets(assets);
+        if (maxSatoshis > 0) {
+          setRecommendedTypeIndex(recommended);
+        }
+      } catch {
+        if (!cancelled) {
+          // Balance lookup is advisory: recovery must still work while offline.
+          setAddressAssets({});
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-    }
-    if (maxSatoshis > 0) {
-      setRecommendedTypeIndex(recommended);
-    }
+    };
 
-    setAddressAssets(addressAssets);
-  };
-
-  useEffect(() => {
-    fetchAddressesBalance();
-  }, [previewAddresses]);
+    void fetchAddressesBalance();
+    return () => {
+      cancelled = true;
+    };
+  }, [contextData.isRestore, previewAddresses, wallet]);
 
   const submitCustomHdPath = (text: string) => {
     setPathError('');
+    setError('');
+    text = text.replace(/[\u2018\u2019]/g, "'").trim();
     setPathText(text);
     if (text !== '') {
       const isValid = isValidHdPath(text);
@@ -195,43 +244,74 @@ export function Step2({
   };
 
   const disabled = useMemo(() => {
-    if (!error && !pathError) {
-      return false;
-    } else {
-      return true;
-    }
-  }, [error, pathError]);
+    return (
+      Boolean(error) ||
+      Boolean(pathError) ||
+      previewLoading ||
+      loading ||
+      submitting ||
+      previewAddresses.length !== hdPathOptions.length ||
+      previewAddresses.some((address) => !address)
+    );
+  }, [error, hdPathOptions.length, loading, pathError, previewAddresses, previewLoading, submitting]);
 
   const onNext = async () => {
+    if (disabled) {
+      return;
+    }
+    setSubmitting(true);
     try {
       if (scannedGroups.length > 0) {
         const option = allHdPathOptions[contextData.addressTypeIndex];
         const hdPath = contextData.customHdPath || option.hdPath;
         const selected = scannedGroups[contextData.addressTypeIndex];
 
-        await createAccount(
-          contextData.mnemonics,
-          hdPath,
-          contextData.passphrase,
-          contextData.addressType,
-          selected.address_arr.length,
-          isMagicEden
-        );
+        if (contextData.isRestore) {
+          await createAccount(
+            contextData.mnemonics,
+            hdPath,
+            contextData.passphrase,
+            contextData.addressType,
+            selected.address_arr.length,
+            isMagicEden
+          );
+        } else {
+          await createAccountFromPreMnemonic(
+            hdPath,
+            contextData.passphrase,
+            contextData.addressType,
+            selected.address_arr.length,
+            isMagicEden
+          );
+        }
       } else {
         const option = hdPathOptions[contextData.addressTypeIndex];
         const hdPath = contextData.customHdPath || option.hdPath;
-        await createAccount(
-          contextData.mnemonics,
-          hdPath,
-          contextData.passphrase,
-          contextData.addressType,
-          1,
-          isMagicEden
-        );
+        if (contextData.isRestore) {
+          await createAccount(
+            contextData.mnemonics,
+            hdPath,
+            contextData.passphrase,
+            contextData.addressType,
+            1,
+            isMagicEden
+          );
+        } else {
+          await createAccountFromPreMnemonic(
+            hdPath,
+            contextData.passphrase,
+            contextData.addressType,
+            1,
+            isMagicEden
+          );
+        }
       }
+      clearSensitiveState();
       navigate('MainScreen');
     } catch (e) {
       tools.toastError((e as any).message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -245,19 +325,26 @@ export function Step2({
         const address_arr: string[] = [];
         const satoshis_arr: number[] = [];
         try {
-          const keyring = await wallet.createTmpKeyringWithMnemonics(
-            contextData.mnemonics,
-            contextData.customHdPath || options.hdPath,
-            contextData.passphrase,
-            options.addressType,
-            10,
-            isMagicEden
-          );
+          const keyring = contextData.isRestore
+            ? await wallet.createTmpKeyringWithMnemonics(
+                contextData.mnemonics,
+                contextData.customHdPath || options.hdPath,
+                contextData.passphrase,
+                options.addressType,
+                10,
+                isMagicEden
+              )
+            : await wallet.createTmpKeyringWithPreMnemonic(
+                contextData.customHdPath || options.hdPath,
+                contextData.passphrase,
+                options.addressType,
+                10,
+                isMagicEden
+              );
           keyring.accounts.forEach((v, j) => {
             address_arr.push(v.address);
           });
         } catch (e) {
-          console.log(e);
           setError((e as any).message);
           return;
         }
@@ -364,7 +451,7 @@ export function Step2({
           );
         })}
 
-      {restoreWallet.customPathSupport && (
+      {!scanned && restoreWallet.customPathSupport && (
         <Column mt="lg">
           <Text text={t('custom_hdpath_optional')} preset="bold" />
           <Column>
@@ -381,19 +468,21 @@ export function Step2({
         </Column>
       )}
 
-      {error && <Text text={error} color="error" />}
+      {!pathError && error && <Text text={error} color="error" />}
 
-      {restoreWallet.phraseSupport && (
+      {!scanned && restoreWallet.phraseSupport && (
         <Column mt="lg">
           <Text text={t('phrase_optional')} preset="bold" />
           <Input
             placeholder={t('passphrase')}
-            defaultValue={contextData.passphrase}
+            value={contextData.passphrase}
             onChange={async (e) => {
               updateContextData({
                 passphrase: e.target.value
               });
             }}
+            autoComplete="off"
+            spellCheck={false}
             data-testid="passphrase-input"
           />
         </Column>

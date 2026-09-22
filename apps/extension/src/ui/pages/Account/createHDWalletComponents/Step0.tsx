@@ -1,9 +1,10 @@
 import { Button, Column, Text } from '@/ui/components';
 import { ContextData, TabType, UpdateContextDataParams } from '@/ui/pages/Account/createHDWalletComponents/types';
-import { RESTORE_WALLETS } from '@unisat/wallet-shared';
+import { RESTORE_WALLETS, WordsType } from '@unisat/wallet-shared';
 import { useI18n } from '@unisat/wallet-state';
 
 export function Step0({
+  contextData,
   updateContextData
 }: {
   contextData: ContextData;
@@ -19,7 +20,11 @@ export function Step0({
             key={index}
             preset="default"
             onClick={() => {
-              updateContextData({ tabType: TabType.IMPORT_WORDS, restoreWalletType: item.value });
+              const wordsType = item.wordsTypes.includes(contextData.wordsType)
+                ? contextData.wordsType
+                : item.wordsTypes[0] ?? WordsType.WORDS_12;
+
+              updateContextData({ tabType: TabType.IMPORT_WORDS, restoreWalletType: item.value, wordsType });
             }}
             data-testid={`restore-wallet-type-option-${index}`}>
             <Text text={item.i18nKey ? t(item.i18nKey) : item.name} />

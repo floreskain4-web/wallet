@@ -86,9 +86,6 @@
   "all_read": {
     "message": "All Read"
   },
-  "allow_sign_data_requests": {
-    "message": "Allow signData requests"
-  },
   "allow_this_site_to_switch_the_chain": {
     "message": "Allow this site to switch the chain?"
   },
@@ -129,7 +126,7 @@
     "message": "ARC20 Burn Risk List"
   },
   "are_not_supported": {
-    "message": "are not supported."
+    "message": "."
   },
   "are_not_supported_yet": {
     "message": "are not supported yet."
@@ -325,12 +322,6 @@
   },
   "cap": {
     "message": "Cap"
-  },
-  "cat": {
-    "message": "CAT"
-  },
-  "cat20_warning_nomerge": {
-    "message": "You need at least 2 UTXOs to merge"
   },
   "cbor_data_is_required_for_parsing_cosmos_signature": {
     "message": "CBOR data is required for parsing Cosmos signature"
@@ -576,7 +567,7 @@
     "message": "Create Watch Wallet"
   },
   "create_with_mnemonics_12words": {
-    "message": "Create with mnemonics (12-words)"
+    "message": "Create with mnemonics"
   },
   "current": {
     "message": "Current"
@@ -693,7 +684,7 @@
     "message": "Do you confirm the transfer?"
   },
   "does_not_exist": {
-    "message": "does not exist"
+    "message": "The item you are looking for does not exist."
   },
   "does_not_support_account_removal_operations": {
     "message": "does not support account removal operations"
@@ -724,15 +715,6 @@
   },
   "enable_atomicals_assets_warning": {
     "message": "The atomicals assets will no longer be displayed in the wallet, and they can be spent as regular balance. Please proceed with caution."
-  },
-  "enable_sign_data_popover_warning": {
-    "message": "Allowing signData requests can make you vulnerable to phishing attacks. Always review the URL and be careful when signing messages that contain code."
-  },
-  "enable_sign_data_popover_warning_2": {
-    "message": "If you've been asked to turn this setting on, you might be getting scammed"
-  },
-  "enable_sign_data_warning": {
-    "message": "If you enable this setting, you might get signature requests that aren't readable. By signing a message you don't understand, you could be agreeing to give away your funds and NFTs.You're at risk for phishing attacks. Protect yourself by turning off signData."
   },
   "enable_unconfirmed_balance": {
     "message": "Enable Unconfirmed Balance"
@@ -828,7 +810,7 @@
     "message": "For Atomicals assets,"
   },
   "for_ordinals_assets": {
-    "message": "For Ordinals assets,"
+    "message": "UniSat Wallet currently does not support "
   },
   "from": {
     "message": "From"
@@ -980,9 +962,6 @@
   "i_have_signed_scan_result": {
     "message": "I Have Signed, Scan Result"
   },
-  "i_only_sign_what_i_understand": {
-    "message": "I only sign what I understand"
-  },
   "i_saved_my_secret_recovery_phrase": {
     "message": "I saved My Secret Recovery Phrase"
   },
@@ -1130,6 +1109,9 @@
   "invalid_psbt": {
     "message": "invalid psbt"
   },
+  "invalid_public_key": {
+    "message": "Invalid Public Key"
+  },
   "invalid_public_key_in_tosigninput": {
     "message": "invalid public key in toSignInput"
   },
@@ -1201,18 +1183,6 @@
   },
   "learn_more_about_keystone": {
     "message": "Learn more about Keystone"
-  },
-  "legacy_address_warning": {
-    "message": "It is not recommended to use legacy addresses, as they may lead to higher transaction fees or the unintended lock-up of CAT20 balances."
-  },
-  "legacy_address_warning_2": {
-    "message": "It is not recommended to send transactions to legacy addresses, as this may result in the unintended spending of CAT20 balances."
-  },
-  "legacy_address_warning_3": {
-    "message": "It is not recommended to use legacy addresses, as they may lead to higher transaction fees or the unintended lock-up of CAT20 balances."
-  },
-  "legacy_address_warning_4": {
-    "message": "It is not recommended to send transactions to legacy addresses, as this may result in the unintended spending of CAT20 balances."
   },
   "legacy_p2pkh": {
     "message": "Legacy (P2PKH)"
@@ -1313,9 +1283,6 @@
   "merge_utxos_failed": {
     "message": "Merge failed"
   },
-  "merge_utxos_for_cat20_asset": {
-    "message": "Merge UTXOs for CAT20 Asset"
-  },
   "merge_utxos_is_not_supported_for_keystone_yet": {
     "message": "Merge UTXOs is not supported for Keystone yet"
   },
@@ -1375,6 +1342,9 @@
   },
   "mnemonics_12_words": {
     "message": "12 words"
+  },
+  "mnemonics_12_words_not_recommended": {
+    "message": "It is recommended to use a 24-word recovery phrase. Compared with a 12-word recovery phrase, a 24-word recovery phrase provides stronger randomness and a higher level of security."
   },
   "mnemonics_24_words": {
     "message": "24 words"
@@ -1450,6 +1420,9 @@
   },
   "multiple_assets_risk_title": {
     "message": "Multiple assets detected"
+  },
+  "multiple_risks_detected_description": {
+    "message": "This transaction involves multiple risks. Please review carefully before continuing."
   },
   "multiple_inscriptions_are_mixed_together_please_sp": {
     "message": "Multiple inscriptions are mixed together. Please split them first."
@@ -1650,7 +1623,7 @@
     "message": "Others"
   },
   "output_value": {
-    "message": "output value"
+    "message": "Output value"
   },
   "output_value_must_be_at_least": {
     "message": "OutputValue must be at least"
@@ -1781,6 +1754,9 @@
   "psbt_data": {
     "message": "PSBT Data:"
   },
+  "signed_psbt_data": {
+    "message": "Signed PSBT Data"
+  },
   "public_key_must_be_compressed_secp256k1_ie_33_byte": {
     "message": "Public key must be compressed secp256k1, i.e. 33 bytes starting with 0x02 or 0x03"
   },
@@ -1794,7 +1770,7 @@
     "message": "Range"
   },
   "rare_sats": {
-    "message": "Rare sats"
+    "message": "Rare Sats"
   },
   "rate_us": {
     "message": "Rate us"
@@ -1803,7 +1779,7 @@
     "message": "RBF"
   },
   "rbf_tip": {
-    "message": "A feature allows the transaction to be replaced."
+    "message": "RBF marks this unconfirmed transaction as replaceable so you can retry it with a higher fee. Even if RBF is turned off, the transaction may still be replaceable depending on network policy."
   },
   "receive": {
     "message": "Receive"
@@ -1860,7 +1836,7 @@
     "message": "Restore from Mnemonics"
   },
   "restore_from_mnemonics_12words24words": {
-    "message": "Restore from mnemonics (12-words、24-words)"
+    "message": "Restore from mnemonics"
   },
   "restore_from_single_private_key": {
     "message": "Restore from single private key"
@@ -2003,9 +1979,6 @@
   "send": {
     "message": "Send"
   },
-  "send_CAT721": {
-    "message": "Send CAT721"
-  },
   "send_alkanes": {
     "message": "Send Alkanes"
   },
@@ -2020,15 +1993,6 @@
   },
   "send_atomicals_inscription": {
     "message": "Send Atomicals Inscription"
-  },
-  "send_cat20": {
-    "message": "Send CAT20"
-  },
-  "send_cat20_is_not_supported_for_keystone_yet": {
-    "message": "Send CAT20 is not supported for Keystone yet"
-  },
-  "send_cat721": {
-    "message": "Send CAT721"
   },
   "send_inscription": {
     "message": "You may click on the inscription to send it directly."
@@ -2090,17 +2054,17 @@
   "derive_context_hash_app_name": {
     "message": "Application"
   },
+  "derive_context_hash_account": {
+    "message": "Account"
+  },
+  "derive_context_hash_network": {
+    "message": "Network"
+  },
   "derive_context_hash_context": {
     "message": "Context"
   },
   "derive_context_hash_warning": {
     "message": "Only approve if you trust this site."
-  },
-  "sign_data_request": {
-    "message": "Sign Data request"
-  },
-  "sign_data_requests": {
-    "message": "signData requests"
   },
   "sign_multiple_transactions": {
     "message": "Sign Multiple Transactions"
@@ -2122,9 +2086,6 @@
   },
   "signdata_is_required_for_cosmos_signing": {
     "message": "signData is required for Cosmos signing"
-  },
-  "signdata_required_tip": {
-    "message": "You need to enable the signData request feature in Settings -> Advanced to continue."
   },
   "signed": {
     "message": "Signed"
@@ -2510,9 +2471,6 @@
   "understand_and_accept_the_risks_associated_with_this_transaction": {
     "message": "I understand and accept the risks associated with this transaction."
   },
-  "understand_sign_data_warning": {
-    "message": "I understand that I can lose all of my funds and NFTs if I enable signData requests."
-  },
   "unisat": {
     "message": "UNISAT"
   },
@@ -2562,10 +2520,25 @@
     "message": "User rejected the request."
   },
   "utxo_indexing_risk_description": {
-    "message": "The selected UTXO belongs to a transaction that is still being indexed. To ensure transaction security and reliability, please wait for indexing to complete before proceeding."
+    "message": "This UTXO is still being indexed, and its attached assets may not have been fully identified yet. We strongly recommend waiting until indexing is complete. This usually takes about 5 minutes."
+  },
+  "utxo_indexing_in_progress": {
+    "message": "Indexing in progress"
+  },
+  "utxo_indexing_risk_asset_warning": {
+    "message": "Sending it now may result in permanent asset loss."
+  },
+  "utxo_indexing_risk_agreement": {
+    "message": "I understand this may cause permanent asset loss and want to send this UTXO anyway"
   },
   "utxo_indexing_risk_title": {
-    "message": "UTXO Indexing in Progress"
+    "message": "Proceed at your own risk"
+  },
+  "understand_the_risks_continue": {
+    "message": "Understand the Risks, Continue"
+  },
+  "try_again_later": {
+    "message": "Try Again Later"
   },
   "utxo_not_found": {
     "message": "UTXO not found."
@@ -2642,9 +2615,6 @@
   "you_are_signing": {
     "message": "You are signing:"
   },
-  "you_are_signing_data": {
-    "message": "You are signing data:"
-  },
   "you_can_unlock_these_assets_by_using_the_utxos_tools": {
     "message": "You can unlock these assets by using the UTXO tools."
   },
@@ -2671,5 +2641,56 @@
   },
   "your_balance_have_to_be_merged": {
     "message": "Your "
+  },
+  "connect_to_readonly_wallet": {
+    "message": "Connect to Readonly Wallet"
+  },
+  "copy_message_to_sign": {
+    "message": "Copy message to sign"
+  },
+  "create_readonly_wallet": {
+    "message": "Create Readonly Wallet"
+  },
+  "enter_your_signature": {
+    "message": "Enter your signature"
+  },
+  "invalid_signature": {
+    "message": "Invalid signature"
+  },
+  "please_enter_your_signature": {
+    "message": "Please enter your signature"
+  },
+  "public_key": {
+    "message": "Public Key"
+  },
+  "readonly_wallet": {
+    "message": "Readonly Wallet"
+  },
+  "copy_signing_params": {
+    "message": "Copy signing parameters"
+  },
+  "readonly_signing": {
+    "message": "Offline signing"
+  },
+  "readonly_signing_copy_step": {
+    "message": "Copy the signing request"
+  },
+  "readonly_signing_copy_button": {
+    "message": "Copy request"
+  },
+  "readonly_signing_paste_step": {
+    "message": "Paste the signed PSBT"
+  },
+  "readonly_signing_paste_placeholder": {
+    "message": "Signed PSBT hex"
+  },
+  "readonly_signing_paste_signature_step": {
+    "message": "Paste the signature"
+  },
+  "readonly_signing_signature_placeholder": {
+    "message": "Signature"
+  },
+  "load_more_items": {
+    "message": "Load {count} more"
   }
 }

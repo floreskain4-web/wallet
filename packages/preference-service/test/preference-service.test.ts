@@ -25,7 +25,6 @@ describe('PreferenceService', () => {
       locale: 'unknown-locale',
       currency: '',
       externalLinkAck: 'x',
-      enableSignData: undefined,
       showSafeNotice: undefined,
       balanceMap: null,
       historyMap: null,
@@ -58,7 +57,6 @@ describe('PreferenceService', () => {
     expect(service.getLocale()).toBe('en')
     expect(service.getCurrency()).toBe('USD')
     expect(service.getExternalLinkAck()).toBe(false)
-    expect(service.getEnableSignData()).toBe(false)
     expect(service.getShowSafeNotice()).toBe(true)
     expect(service.getCurrentAccount()).toBeNull()
 
@@ -78,7 +76,6 @@ describe('PreferenceService', () => {
       locale: 'en',
       currency: 'USD',
       externalLinkAck: false,
-      enableSignData: false,
       showSafeNotice: true,
       currentAccount: null,
       currentKeyringIndex: 0,
@@ -141,7 +138,6 @@ describe('PreferenceService', () => {
       locale: 'en',
       currency: 'USD',
       externalLinkAck: false,
-      enableSignData: false,
       showSafeNotice: true,
       currentAccount: null,
       currentKeyringIndex: 0,
@@ -191,7 +187,6 @@ describe('PreferenceService', () => {
       locale: 'en',
       currency: 'USD',
       externalLinkAck: false,
-      enableSignData: false,
       showSafeNotice: true,
       currentAccount: null,
       currentKeyringIndex: 0,
@@ -246,7 +241,6 @@ describe('PreferenceService', () => {
       locale: 'en',
       currency: 'USD',
       externalLinkAck: false,
-      enableSignData: false,
       showSafeNotice: true,
       currentAccount: null,
       currentKeyringIndex: 0,

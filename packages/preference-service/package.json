@@ -1,6 +1,6 @@
 {
   "name": "@unisat/preference-service",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Cross-platform preference management service for UniSat wallet",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
@@ -28,7 +28,8 @@
     "build:esm": "tsup --format esm",
     "build:typed": "tsc --declaration --declarationMap --emitDeclarationOnly --outDir lib",
     "test": "vitest run",
-    "lint": "eslint src"
+    "lint": "eslint src --ext .ts,.js",
+    "prepublishOnly": "pnpm test && pnpm build"
   },
   "dependencies": {
     "@unisat/wallet-types": "workspace:*",

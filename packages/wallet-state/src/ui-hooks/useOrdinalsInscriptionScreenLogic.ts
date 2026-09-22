@@ -1,7 +1,7 @@
 import { Inscription } from '@unisat/wallet-shared'
 import { useCallback, useEffect, useState } from 'react'
 import { useI18n, useNavigation, useWallet } from 'src/context'
-import { useCurrentAccount, useResetTxState } from 'src/hooks'
+import { useCurrentAccount, useCurrentAccountCapabilities, useResetTxState } from 'src/hooks'
 
 const HIGH_BALANCE = 10000
 
@@ -19,6 +19,7 @@ export function useOrdinalsInscriptionScreenLogic() {
   const [isInitialLoading, setIsInitialLoading] = useState(!props.inscription)
 
   const currentAccount = useCurrentAccount()
+  const accountCapabilities = useCurrentAccountCapabilities()
 
   const resetTxState = useResetTxState()
 
@@ -100,7 +101,7 @@ export function useOrdinalsInscriptionScreenLogic() {
 
   const isUnconfirmed = inscription ? inscription.timestamp == 0 : false
 
-  const withSend = inscription ? currentAccount.address === inscription.address : false
+  const withSend = inscription ? accountCapabilities.canCreateSigningRequest && currentAccount.address === inscription.address : false
 
   const children = inscription ? inscription.children || [] : []
   const parents = inscription ? inscription.parents || [] : []

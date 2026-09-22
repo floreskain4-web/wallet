@@ -1,11 +1,9 @@
 import bigInt from 'big-integer'
 
-import { varint } from './runes'
-import { RuneId } from './runes/rund_id'
 import { createTx } from './transaction/transaction'
 import { utxoHelper } from './transaction/utxo'
 import { UnspentOutput } from './types'
-import { bitcoin } from '@unisat/wallet-bitcoin'
+import { encodeRunestoneProtostone, ProtoStone, RuneId } from '@unisat/alkanes-lib'
 import { NetworkType } from '@unisat/wallet-types'
 import { ToSignInput } from '@unisat/keyring-service/types'
 import { ErrorCodes, WalletError } from '@unisat/wallet-shared'
@@ -22,6 +20,7 @@ export async function sendRunes({
   runeAmount,
   outputValue,
   feeRate,
+  enableRBF = true,
 }: {
   assetUtxos: UnspentOutput[]
   btcUtxos: UnspentOutput[]
@@ -33,6 +32,7 @@ export async function sendRunes({
   runeAmount: string
   outputValue: number
   feeRate: number
+  enableRBF?: boolean
 }) {
   // safe check
   if (utxoHelper.hasInscription(assetUtxos)) {
@@ -43,7 +43,7 @@ export async function sendRunes({
     throw new WalletError(ErrorCodes.NOT_SAFE_UTXOS)
   }
 
-  const tx = createTx({ networkType, feeRate, changeAddress: btcAddress, enableRBF: true })
+  const tx = createTx({ networkType, feeRate, changeAddress: btcAddress, enableRBF })
 
   const toSignInputs: ToSignInput[] = []
 
@@ -54,22 +54,22 @@ export async function sendRunes({
   })
 
   let fromRuneAmount = bigInt(0)
-  let hasMultipleRunes = false
-  let runesMap: { [key: string]: boolean } = {}
+  let hasOtherRunes = false
+  let hasAlkanes = false
   assetUtxos.forEach(v => {
     if (v.runes) {
       v.runes.forEach(w => {
-        runesMap[w.runeid] = true
         if (w.runeid === runeid) {
           fromRuneAmount = fromRuneAmount.plus(bigInt(w.amount))
+        } else {
+          hasOtherRunes = true
         }
       })
     }
+    if (v.alkanes?.length) {
+      hasAlkanes = true
+    }
   })
-
-  if (Object.keys(runesMap).length > 1) {
-    hasMultipleRunes = true
-  }
 
   const changedRuneAmount = fromRuneAmount.minus(bigInt(runeAmount))
 
@@ -78,38 +78,31 @@ export async function sendRunes({
   }
 
   let needChange = false
-  if (hasMultipleRunes || changedRuneAmount.gt(0)) {
+  if (hasOtherRunes || hasAlkanes || changedRuneAmount.gt(0)) {
     needChange = true
   }
 
-  let payload: number[] = []
-  let runeId: RuneId = RuneId.fromString(runeid)
-
-  varint.encodeToVec(0, payload)
-
-  // add send data
-  varint.encodeToVec(runeId.block, payload)
-  varint.encodeToVec(runeId.tx, payload)
-  varint.encodeToVec(runeAmount, payload)
-  if (needChange) {
-    // 1 is to change
-    // 2 is to send
-    varint.encodeToVec(2, payload)
-  } else {
-    // 1 is to send
-    varint.encodeToVec(1, payload)
-  }
+  const runeId = RuneId.fromString(runeid)
+  const runeOutput = needChange ? 2 : 1
+  const changeOutput = needChange ? 1 : runeOutput
+  const protostones = hasAlkanes
+    ? [
+        ProtoStone.message({
+          protocolTag: BigInt(1),
+          pointer: changeOutput,
+          refundPointer: 0,
+          calldata: Buffer.alloc(0),
+        }),
+      ]
+    : []
+  const script = encodeRunestoneProtostone({
+    pointer: changeOutput,
+    edicts: [{ id: runeId, amount: BigInt(runeAmount), output: runeOutput }],
+    protostones,
+  }).encodedRunestone
 
   // add op_return
-  tx.addScriptOutput(
-    // OUTPUT_0
-    bitcoin.script.compile([
-      bitcoin.opcodes['OP_RETURN']!,
-      bitcoin.opcodes['OP_13']!,
-      Buffer.from(new Uint8Array(payload)),
-    ]),
-    0
-  )
+  tx.addScriptOutput(script, 0)
 
   if (needChange) {
     // OUTPUT_1

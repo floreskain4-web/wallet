@@ -248,6 +248,30 @@ export function useCreateAccountCallback() {
   )
 }
 
+export function useCreatePreMnemonicAccountCallback() {
+  const dispatch = useAppDispatch()
+  const wallet = useWallet()
+  return useCallback(
+    async (
+      hdPath: string,
+      passphrase: string,
+      addressType: AddressType,
+      accountCount: number,
+      accountIndexDerivation = false
+    ) => {
+      await wallet.createKeyringWithPreMnemonic(
+        hdPath,
+        passphrase,
+        addressType,
+        accountCount,
+        accountIndexDerivation
+      )
+      dispatch(globalActions.update({ isUnlocked: true }))
+    },
+    [dispatch, wallet]
+  )
+}
+
 export function useImportAccountsFromKeystoneCallback() {
   const dispatch = useAppDispatch()
   const wallet = useWallet()

@@ -29,7 +29,6 @@ export interface BasePreferenceStore {
   locale: string
   currency: string
   externalLinkAck: boolean
-  enableSignData: boolean
   showSafeNotice: boolean
 
   // Network and address configuration
@@ -110,6 +109,7 @@ export interface BasePreferenceStore {
   rateUsStatus: RateUsStatus
 
   acceptLowFeeMode: boolean
+  enableRBF: boolean
 }
 
 export interface RateUsStatus {

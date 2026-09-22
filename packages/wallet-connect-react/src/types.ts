@@ -86,6 +86,8 @@ export interface WalletProviderConfig {
   onConnectError?: OnConnectError;
   /** Callback when account changes */
   onAccountChange?: OnAccountChange;
+  /** Whether to disconnect when the wallet network changes. Defaults to false. */
+  disconnectOnNetworkChange?: boolean;
   /** Function to validate address type (default: P2WPKH or Taproot) */
   validateAddress?: ValidateAddress;
   /** Whether to disable auto-connect */

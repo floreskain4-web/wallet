@@ -25,6 +25,8 @@ export interface Keyring {
   verifyMessage(address: string, message: string, sig: string): Promise<boolean>
   exportAccount(address: string): Promise<string>
   removeAccount(address: string): void
+  clearRecoveryData?(): void
+  clearSensitiveData?(): void
 
   // Optional methods for different keyring types
   unlock?(): Promise<void>
@@ -39,7 +41,12 @@ export interface Keyring {
 
   changeHdPath?(hdPath: string): void
   getAccountByHdPath?(hdPath: string, index: number): string
-  deriveContextHash?(publicKey: string, appName: string, context: string): Promise<string>
+  deriveContextHash?(
+    publicKey: string,
+    appName: string,
+    canonicalNetworkName: string,
+    context: string,
+  ): Promise<string>
 
   // Keystone specific methods
   genSignPsbtUr?(psbtHex: string): Promise<{ type: string; cbor: string }>

@@ -6,6 +6,7 @@ export default function ExportMnemonicsScreen() {
     words,
     pathName,
     t,
+    password,
     setPassword,
     disabled,
     btnClick,
@@ -43,6 +44,7 @@ export default function ExportMnemonicsScreen() {
             />
             <Input
               preset="password"
+              value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
               }}

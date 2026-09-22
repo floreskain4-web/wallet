@@ -1,8 +1,7 @@
 import { copyToClipboard, shortAddress } from '@/ui/utils';
 import { CopyOutlined } from '@ant-design/icons';
-import { useI18n } from '@unisat/wallet-state';
+import { useI18n, useTools } from '@unisat/wallet-state';
 
-import { useTools } from '@unisat/wallet-state';
 import { Row } from '../Row';
 import { Text } from '../Text';
 
@@ -10,6 +9,7 @@ export function Section({
   value,
   title,
   link,
+  onClick,
   showCopyIcon,
   maxLength = 20,
   rightComponent
@@ -17,6 +17,7 @@ export function Section({
   value: string | number;
   title: string;
   link?: string;
+  onClick?: () => void;
   showCopyIcon?: boolean;
   maxLength?: number;
   rightComponent?: React.ReactNode;
@@ -37,13 +38,15 @@ export function Section({
       style={{
         minHeight: 25
       }}>
-      <Text text={title} preset="sub" />
+      <Text text={title} preset="regular" />
       {rightComponent ? (
         rightComponent
       ) : (
         <Row
           onClick={() => {
-            if (link) {
+            if (onClick) {
+              onClick();
+            } else if (link) {
               window.open(link);
             } else {
               copyToClipboard(value).then(() => {
@@ -51,7 +54,7 @@ export function Section({
               });
             }
           }}>
-          <Text text={displayText} preset={link ? 'link' : 'regular'} size="xs" wrap />
+          <Text text={displayText} preset={link || onClick ? 'link' : 'regular'} size="xs" wrap />
           {showCopyIcon && <CopyOutlined style={{ color: '#888', fontSize: 14 }} />}
         </Row>
       )}

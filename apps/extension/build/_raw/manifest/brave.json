@@ -1,7 +1,3 @@
 {
-  "externally_connectable": {
-    "matches": ["https://unisat.io/*"],
-    "ids": ["*"]
-  },
   "minimum_chrome_version": "66"
 }

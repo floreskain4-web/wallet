@@ -1,8 +1,10 @@
-import { FALLBACK_LOCALE, SUPPORTED_LOCALES, SupportedLocale } from '@unisat/wallet-shared';
-import { ProxyStorageAdapter } from '@unisat/wallet-storage';
 import i18n from 'i18next';
 import log from 'loglevel';
 import { initReactI18next } from 'react-i18next';
+
+import { FALLBACK_LOCALE, SUPPORTED_LOCALES, SupportedLocale } from '@unisat/wallet-shared';
+import { ProxyStorageAdapter } from '@unisat/wallet-storage';
+
 const fetchLocale = async (locale: string) => {
   const res = await fetch(`./_locales/${locale}/messages.json`);
   const data: Record<string, { message: string; description: string }> = await res.json();
@@ -35,6 +37,10 @@ const processSubstitutions = (
         substitutions.forEach((substitution, index) => {
           const regex = new RegExp(`\\$${index + 1}`, 'g');
           message = message.replace(regex, substitution);
+        });
+      } else {
+        Object.entries(substitutions).forEach(([key, substitution]) => {
+          message = message.split(`{${key}}`).join(String(substitution));
         });
       }
     }

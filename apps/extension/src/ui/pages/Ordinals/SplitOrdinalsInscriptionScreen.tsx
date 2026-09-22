@@ -2,6 +2,7 @@ import { Button, Column, Content, Header, Layout, Row, Text } from '@/ui/compone
 import { FeeRateBar } from '@/ui/components/FeeRateBar';
 import InscriptionPreview from '@/ui/components/InscriptionPreview';
 import { OutputValueBar } from '@/ui/components/OutputValueBar';
+import { RBFBar } from '@/ui/components/RBFBar';
 import { useSplitOrdinalsInscriptionScreenLogic } from '@unisat/wallet-state';
 
 export default function SplitOrdinalsInscriptionScreen() {
@@ -9,6 +10,8 @@ export default function SplitOrdinalsInscriptionScreen() {
     t,
     inscriptions,
     minOutputValue,
+    enableRBF,
+    setEnableRBF,
     error,
     disabled,
     onOutputValueChange,
@@ -36,6 +39,9 @@ export default function SplitOrdinalsInscriptionScreen() {
           <OutputValueBar defaultValue={minOutputValue} minValue={minOutputValue} onChange={onOutputValueChange} />
           <Column mt="lg">
             <FeeRateBar />
+          </Column>
+          <Column mt="lg">
+            <RBFBar value={enableRBF} onChange={setEnableRBF} />
           </Column>
 
           {error && <Text text={error} color="error" />}

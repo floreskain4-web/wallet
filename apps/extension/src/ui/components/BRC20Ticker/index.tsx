@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { Row } from '../Row';
 import { Text } from '../Text';
+import { TruncatedAssetName } from '../TruncatedAssetName';
 
 // eslint-disable-next-line no-control-regex
 const regex = /[\u0000-\u001F\u007F-\u009F\s]/;
@@ -24,17 +25,22 @@ export function BRC20Ticker({
   displayName,
   preset,
   showOrigin = false,
-  color
+  color,
+  truncate
 }: {
   tick: string | undefined;
   displayName?: string;
   preset?: Presets;
   showOrigin?: boolean;
   color?: any;
+  truncate?: boolean;
 }) {
   const style = $tickerPresets[preset || 'md'];
   return useMemo(() => {
     if (!tick) return <></>;
+
+    const label = displayName || tick;
+
     if (regex.test(tick)) {
       return (
         <Row gap="zero" itemsCenter>
@@ -47,6 +53,11 @@ export function BRC20Ticker({
         </Row>
       );
     }
+
+    if (truncate) {
+      return <TruncatedAssetName text={label} size={style.textSize} color={color || 'ticker_color'} />;
+    }
+
     if (showOrigin && displayName) {
       return (
         <Row gap="sm" itemsCenter>
@@ -57,5 +68,5 @@ export function BRC20Ticker({
     }
 
     return <Text text={displayName || tick} size={style.textSize} wrap color={color || 'ticker_color'} />;
-  }, [tick, displayName]);
+  }, [tick, displayName, truncate, showOrigin, color, preset]);
 }

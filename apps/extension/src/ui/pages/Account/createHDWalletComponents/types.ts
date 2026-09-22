@@ -4,6 +4,7 @@ import { AddressType } from '@unisat/wallet-types';
 export enum TabType {
   SET_PASSWORD = 'SET_PASSWORD',
   CREATE_WORDS = 'CREATE_WORDS',
+  CONFIRM_WORDS = 'CONFIRM_WORDS',
   VERIFY_WORDS = 'VERIFY_WORDS',
   IMPORT_WORDS = 'IMPORT_WORDS',
   CHOOSE_ADDRESS_TYPE = 'CHOOSE_ADDRESS_TYPE',
@@ -18,6 +19,7 @@ export interface ContextData {
   passphrase: string;
   addressType: AddressType;
   step1CreateWordsCompleted: boolean;
+  mnemonicVerified: boolean;
   tabType: TabType;
   restoreWalletType: RestoreWalletType;
   isRestore: boolean;
@@ -33,6 +35,7 @@ export interface UpdateContextDataParams {
   passphrase?: string;
   addressType?: AddressType;
   step1CreateWordsCompleted?: boolean;
+  mnemonicVerified?: boolean;
   tabType?: TabType;
   restoreWalletType?: RestoreWalletType;
   isCustom?: boolean;

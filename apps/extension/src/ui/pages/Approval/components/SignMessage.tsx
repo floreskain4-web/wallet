@@ -1,15 +1,16 @@
-import { Button, Card, Column, Content, Footer, Header, Layout, Row, Text } from '@/ui/components';
+import { Button, Card, Column, Content, Footer, Header, Input, Layout, Row, Text } from '@/ui/components';
 import { ColdWalletSignMessage } from '@/ui/components/ColdWallet';
 import LoadingPage from '@/ui/components/LoadingPage';
 import { PhishingDetection } from '@/ui/components/PhishingDetection';
 import WebsiteBar from '@/ui/components/WebsiteBar';
 import { fontSizes } from '@/ui/theme/font';
 import { KeystoneSignEnum } from '@unisat/keyring-service/types';
-import { SignMessageType } from '@unisat/wallet-shared';
-import { SignMessageProps, useSignMessageLogic } from '@unisat/wallet-state';
+import { AccountSignMethod, SignMessageType } from '@unisat/wallet-shared';
+import { SignMessageProps, useCurrentAccountCapabilities, useSignMessageLogic, useTools } from '@unisat/wallet-state';
 
 import KeystoneSignScreen from '../../Wallet/KeystoneSignScreen';
 import MultiSignDisclaimerModal from './SignPsbt/components/MultiSignDisclaimerModal';
+import { SignPsbtSection } from './SignPsbt/components/Section';
 
 export default function SignMessage(props: SignMessageProps) {
   const {
@@ -50,8 +51,14 @@ export default function SignMessage(props: SignMessageProps) {
     onColdWalletSigningSuccess,
     onColdWalletSigningBack,
 
+    readonlySignature,
+    setReadonlySignature,
+
     onDisclaimerModalClose
   } = useSignMessageLogic(props);
+  const accountCapabilities = useCurrentAccountCapabilities();
+  const tools = useTools();
+  const isReadonly = accountCapabilities.signMethod === AccountSignMethod.External;
 
   let header = props.header;
 
@@ -187,10 +194,43 @@ export default function SignMessage(props: SignMessageProps) {
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
                 flexWrap: 'wrap'
-              }}>
+              }}
+            >
               {currentToSignMessage.text}
             </div>
           </Card>
+          {isReadonly && (
+            <SignPsbtSection title={t('readonly_signing')}>
+              <Card>
+                <Column gap="sm" fullX>
+                  <Text text={`1. ${t('readonly_signing_copy_step')}`} color="textDim" />
+
+                  <Button
+                    preset="defaultV2"
+                    onClick={() => {
+                      tools.copyToClipboard(JSON.stringify([currentToSignMessage.text, currentToSignMessage.type]));
+                    }}
+                    text={t('readonly_signing_copy_button')}
+                  />
+                </Column>
+              </Card>
+              <Card>
+                <Column gap="sm" fullX>
+                  <Text text={`2. ${t('readonly_signing_paste_signature_step')}`} color="textDim" />
+
+                  <Input
+                    preset="text"
+                    placeholder={t('readonly_signing_signature_placeholder')}
+                    autoFocus
+                    value={readonlySignature}
+                    onChange={(e) => {
+                      setReadonlySignature(e.target.value.trim());
+                    }}
+                  />
+                </Column>
+              </Card>
+            </SignPsbtSection>
+          )}
         </Column>
       </Content>
 

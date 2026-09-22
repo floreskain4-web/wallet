@@ -1,4 +1,4 @@
-import { Account } from '@unisat/wallet-shared'
+import { Account, MAX_ALIAS_NAME_LENGTH } from '@unisat/wallet-shared'
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useI18n, useNavigation, useWallet } from 'src/context'
@@ -41,15 +41,15 @@ export function useEditAccountNameScreenLogic() {
 
   const truncatedTitle = useMemo(() => {
     const name = account.alianName || ''
-    if (name.length > 20) {
-      return name.slice(0, 10) + '...'
+    if (name.length > MAX_ALIAS_NAME_LENGTH) {
+      return name.slice(0, MAX_ALIAS_NAME_LENGTH) + '...'
     }
     return name
   }, [account.alianName])
 
   const onInputChange = (e: { target: { value: string } } | string) => {
     const value = typeof e === 'string' ? e : e.target.value
-    if (value.length <= 20) {
+    if (value.length <= MAX_ALIAS_NAME_LENGTH) {
       setAlianName(value)
     }
   }

@@ -52,15 +52,17 @@ export function BalanceCard() {
         <Image src={backgroundImage} size={64} style={{ position: 'absolute', top: 0, right: 0 }} />
         <Row itemsCenter>
           <Text size="sm" text={t('total_balance')} style={{ color: 'rgba(0,0,0,0.55)' }} />
-          <Row
-            style={{ padding: 6, margin: -6 }}
-            onClick={(event) => {
-              stopCardToggle(event);
-              handleHiddenToggle();
-            }}>
-            <Icon color={'black_muted'} icon={isBalanceHidden ? 'balance-eyes-closed' : 'balance-eyes'} size={20} />
+          <Row itemsCenter gap="sm">
+            <Row
+              style={{ padding: 6, margin: -6 }}
+              onClick={(event) => {
+                stopCardToggle(event);
+                handleHiddenToggle();
+              }}>
+              <Icon color={'black_muted'} icon={isBalanceHidden ? 'balance-eyes-closed' : 'balance-eyes'} size={20} />
+            </Row>
+            <RefreshButton onClick={refreshBalance as any} hideText />
           </Row>
-          <RefreshButton onClick={refreshBalance as any} hideText />
         </Row>
 
         <Row itemsCenter>
@@ -75,18 +77,23 @@ export function BalanceCard() {
 
       {isDetailExpanded && isCurrentChainBalance && (
         <Row
-          justifyBetween
-          itemsCenter
           style={{
             width: '100%',
             padding: 12,
             backgroundColor: '#F1CC9F',
-            borderRadius: 16
+            borderRadius: 16,
+            gap: 8,
+            alignItems: 'flex-start'
           }}>
-          <Column style={{ flex: 1 }} gap={'zero'}>
-            <Row>
-              <Text color={'black_65'} size="xs" text={t('available')} style={{ fontWeight: 500 }}></Text>
-              <Row style={{ height: 20 }} />
+          <Column style={{ flex: 1, minWidth: 0, alignItems: 'flex-start' }} gap="xs">
+            <Row itemsCenter gap="xs" style={{ height: 20 }}>
+              <Text
+                color={'black_65'}
+                size="xs"
+                text={t('available')}
+                style={{ fontWeight: 500, lineHeight: '16px' }}
+              />
+              <div style={{ width: 16, height: 16, flexShrink: 0 }} />
             </Row>
             <BtcDisplay preset="sub" balance={availableAmount} hideBalance={isBalanceHidden} />
           </Column>
@@ -94,28 +101,28 @@ export function BalanceCard() {
           <div
             style={{
               width: 1,
-              borderWidth: 1,
-              height: '100%',
-              borderColor: 'rgba(109, 65, 0, 0.15)',
-              marginRight: 5
+              alignSelf: 'stretch',
+              backgroundColor: 'rgba(109, 65, 0, 0.15)',
+              flexShrink: 0
             }}
           />
 
-          <Column style={{ flex: 1 }} gap={'zero'}>
-            <Row itemsCenter>
-              <Text color={'black_65'} size="xs" text={t('unavailable')} style={{ fontWeight: 500 }}></Text>
+          <Column style={{ flex: 1, minWidth: 0, alignItems: 'flex-start' }} gap="xs">
+            <Row itemsCenter gap="xs" style={{ height: 20 }}>
+              <Text
+                color={'black_65'}
+                size="xs"
+                text={t('unavailable')}
+                style={{ fontWeight: 500, lineHeight: '16px' }}
+              />
               <Tooltip
                 title={unavailableTipText}
                 overlayStyle={{
                   fontSize: fontSizes.xs
                 }}>
-                <Icon
-                  icon="balance-question"
-                  size={20}
-                  style={{
-                    marginBottom: 10
-                  }}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', width: 16, height: 16, flexShrink: 0 }}>
+                  <Icon icon="balance-question" size={16} containerStyle={{ display: 'block', marginTop: -1 }} />
+                </div>
               </Tooltip>
             </Row>
             <BtcDisplay preset="sub" balance={unavailableAmount} hideBalance={isBalanceHidden} />
@@ -129,7 +136,7 @@ export function BalanceCard() {
                 marginTop: 5
               }}>
               <Icon
-                style={{ flex: 1, cursor: 'pointer' }}
+                style={{ cursor: 'pointer', flexShrink: 0, alignSelf: 'center' }}
                 icon={'unlock'}
                 size={28}
                 onClick={() => {

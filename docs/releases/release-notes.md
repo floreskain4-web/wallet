@@ -1,5 +1,112 @@
 # UniSat Wallet Release Notes
 
+## v1.7.19
+
+### New Features
+
+- Added local transaction construction for Alkanes transfers.
+- New wallet creation now supports 12- and 24-word recovery phrases, with 24 words selected by default.
+- Added support for pay-to-anchor recipient addresses.
+
+### Improvements
+
+- Expanded PSBT risk details with clearer asset cards, mixed-asset visibility, incremental lists for large transactions, and improved carousel interaction.
+- Improved BRC-20 balance presentation and recipient-address validation.
+
+### Security and Privacy
+
+- Strengthened vault encryption and migrated compatible legacy vaults to a stronger password-based key derivation setting after unlock.
+- Reduced the time recovery phrases, passphrases, and imported private keys remain in memory; added safer cleanup when wallets are locked, removed, or reset.
+- Hardened phishing-page isolation, embedded content restrictions, and UI message-port validation.
+- Removed direct external extension connectivity and the privileged `unisat.io` permission bypass. Provider state now returns accounts only to origins with an approved wallet connection.
+- Improved transaction safety checks for inscriptions, Runes, Alkanes, and mixed-asset UTXOs.
+
+### Breaking Changes
+
+- Removed CAT20 and CAT721 protocol support from the extension, including related asset views and send/merge flows.
+
+### Bug Fixes
+
+- Fixed recovery-phrase generation races, empty confirmation slots, duplicate derivation-path errors, and 12-word warning styling.
+- Fixed handling of mixed Rune and Alkanes assets during transaction construction.
+- Fixed several PSBT risk-detail display and interaction issues.
+
+## v1.7.17
+
+### New Features
+
+- Redesigned the wallet action shortcuts for a cleaner and more consistent home screen experience.
+- Redesigned the fee rate selector to improve readability and selection clarity.
+- Standardized token balance card layouts across BRC-20, Runes, CAT20, and Alkanes assets.
+- Added a shared transfer amount card across BTC, BRC-20, Runes, CAT20, Alkanes, and Babylon send flows.
+
+### Improvements
+
+- Updated asset filter tabs with a pill-style design and more consistent spacing.
+- Improved recipient address input layout alignment.
+- Added truncation and tooltips for long asset names to prevent layout overflow.
+- Kept BRC-20 self-issuance tags aligned beside token names.
+- Improved token balance price rendering and asset card spacing.
+- Respected the configured wallet API endpoint during wallet initialization and restore flows.
+- Removed legacy mobile workspace dependencies and related patches from the extension workspace.
+
+### Bug Fixes
+
+- Added fallback handling for invalid chain types.
+- Stabilized account balance refresh behavior.
+- Fixed permission service initialization so `autoSync` and `internalRequestOrigin` options are respected.
+- Fixed RBF sequence handling when building PSBT inputs.
+- Optimized BTC and Runes fee calculation paths, especially for transactions with many inputs.
+
+## v1.7.16
+
+### New Features
+
+- Added readonly wallet support for testing external PSBT/message signing flows. This is an experimental Developer Mode feature and is not recommended for production or high-value transactions.
+
+### Improvements
+
+- Added account capability checks so watch-only and fixed-address wallets hide or block unsupported send, merge, address type, account creation, and private key export actions.
+
+### Bug Fixes
+
+- Fixed repeated render/effect loops in transaction creation screens.
+
+## v1.7.15
+
+### New Features
+
+- Added a disclaimer prompt for selected Discover apps before opening them.
+
+### Improvements
+
+- Improved RBF tooltip wording across supported languages to clarify that replaceability can still depend on network policy.
+- Polished send form layouts across BTC, Runes, CAT20, CAT721, Alkanes, and Ordinals flows so labels align consistently and action buttons keep stable sizing.
+- Truncated long account names in the account switcher to avoid layout overflow.
+
+### Bug Fixes
+
+- Fixed BRC20 inscribe transfer flow so successful PSBT broadcast continues into the confirmation/result step instead of navigating away early.
+- Added a distinct `NO_ACCOUNT` provider error code when the wallet has no account, avoiding incorrect classification as user cancellation.
+
+## v1.7.14
+
+### Improvements
+
+- Updated `unisat.deriveContextHash` derivation semantics to bind output to the connected leaf public key (per-address), and added interface-level support updates for the new behavior.
+- Added a persisted global RBF preference across supported send flows, so BTC/BRC20/Runes/Ordinals send paths share one remembered RBF toggle state.
+
+### Bug Fixes
+
+- Fixed notification-service test typing incompatibilities by aligning test fixtures with the current `StoredNotification` contract (including required `linkType`).
+
+## Unreleased
+
+### Breaking Changes (Experimental API)
+
+- **`unisat.deriveContextHash` derivation input changed (spec v1.0 → v2.0).** HD wallets still use the fixed BIP-32 path `m/73681862'` as IKM, while imported wallets still use the raw imported private key. v2.0 now injects the wallet's canonical Bitcoin network and the currently connected compressed public key into HKDF `info`, so switching network or connected account produces a different output. dApps do not need to encode the wallet network or public key in `context`.
+- **Outputs change for any prior caller.** Any dApp that persisted v1.0 outputs (e.g. an HTLC pre-image, a Lamport seed) must re-derive against v2.0 — there is no version-discovery mechanism. The API remains marked `@experimental`. See [`../api/derive-context-hash.md`](../api/derive-context-hash.md) for the updated contract.
+
 ## v1.7.13
 
 ### Improvements

@@ -32,7 +32,7 @@ export function RefreshButton({
 
   return (
     <Row
-      mx="md"
+      mx={hideText ? 'zero' : 'md'}
       itemsCenter
       onClick={(e) => {
         e.stopPropagation();
@@ -49,7 +49,7 @@ export function RefreshButton({
         wait(5);
         onClick(e);
       }}
-      style={{ padding: '6px 8px', margin: '-6px -8px' }}>
+      style={hideText ? { padding: 6, margin: -6 } : { padding: '6px 8px', margin: '-6px -8px' }}>
       <ReloadOutlined className={isRotating ? styles.rotate : ''} style={{ fontSize: 14, color: 'rgba(0,0,0,0.5)' }} />
       {!hideText && (
         <Text text={disabled ? `${leftTime} ${t('secs')}` : t('refresh')} color="black_muted" size="sm" textCenter />

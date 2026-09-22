@@ -1,6 +1,5 @@
 import { CSSProperties, useEffect, useState } from 'react';
 
-import { colors } from '@/ui/theme/colors';
 import { useI18n } from '@unisat/wallet-state';
 
 import { useTools } from '@unisat/wallet-state';
@@ -12,6 +11,26 @@ import { Text } from '../Text';
 enum FeeRateType {
   CURRENT,
   CUSTOM
+}
+
+function getOptionStyle(selected: boolean): CSSProperties {
+  return {
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: selected ? '#ebb94c' : 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: selected ? 'rgba(235, 185, 76, 0.1)' : 'rgba(255, 255, 255, 0.08)',
+    height: 64,
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'center',
+    padding: 4,
+    borderRadius: 8,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxSizing: 'border-box'
+  };
 }
 
 export function OutputValueBar({
@@ -66,8 +85,8 @@ export function OutputValueBar({
   }, [minValue, currentValue]);
 
   return (
-    <Column>
-      <Row justifyCenter>
+    <Column fullX>
+      <Row gap="md" fullX>
         {options.map((v, index) => {
           const selected = index === optionIndex;
           return (
@@ -80,32 +99,18 @@ export function OutputValueBar({
                 }
                 setOptionIndex(index);
               }}
-              style={Object.assign(
-                {},
-                {
-                  borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  height: 75,
-                  width: 120,
-                  textAlign: 'center',
-                  padding: 4,
-                  borderRadius: 5,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  cursor: 'pointer'
-                } as CSSProperties,
-                selected ? { backgroundColor: colors.primary } : {}
-              )}>
+              style={getOptionStyle(selected)}>
               <Text
                 text={v.title}
-                color={selected ? 'black' : 'white'}
+                color="white"
                 textCenter
                 style={{
                   fontSize: isSpecialLocale ? '8px' : '14px'
                 }}
               />
-              {v.value && <Text text={`${v.value} sats`} color={selected ? 'black' : 'white'} textCenter size="xs" />}
+              {v.value ? (
+                <Text text={`${v.value} sats`} color="white" textCenter size="xs" style={{ opacity: 0.8 }} />
+              ) : null}
             </div>
           );
         })}

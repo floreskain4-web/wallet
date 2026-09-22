@@ -131,16 +131,6 @@ export class BitcoinAPIMethods {
     });
   };
 
-  signData = async (data: string, type: string) => {
-    return this.provider[requestMethodKey]({
-      method: 'signData',
-      params: {
-        data,
-        type
-      }
-    });
-  };
-
   sendBitcoin = async (
     toAddress: string,
     satoshis: number,

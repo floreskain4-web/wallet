@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { colors } from '@/ui/theme/colors';
+import { spacing } from '@/ui/theme/spacing';
 
 import { Column } from '../Column';
 import { Row } from '../Row';
@@ -41,12 +42,19 @@ export function Tabs({ preset, items, defaultActiveKey, activeKey, onTabClick }:
             return (
               <Column
                 key={item.key}
-                style={{ borderWidth: 1, borderRadius: 20, backgroundColor: '#322D1F' }}
-                color={isActiveItem ? 'gold' : 'white_muted'}
+                itemsCenter
+                justifyCenter
+                px="lg"
+                style={{
+                  height: 32,
+                  borderRadius: 16,
+                  borderWidth: 0,
+                  backgroundColor: isActiveItem ? '#322D1F' : 'rgba(255, 255, 255, 0.08)'
+                }}
                 onClick={() => onTabClick(item.key)}
                 data-testid={`tab-item-${item.key}`}>
                 {typeof item.label === 'string' ? (
-                  <Text text={item.label} size="xs" color={isActiveItem ? 'gold' : 'white_muted'} mx="md" my="sm" />
+                  <Text text={item.label} size="xs" color={isActiveItem ? 'gold' : 'white_muted'} />
                 ) : (
                   item.label
                 )}
@@ -56,13 +64,28 @@ export function Tabs({ preset, items, defaultActiveKey, activeKey, onTabClick }:
         </Row>
       );
     } else {
+      const bleedStyle = {
+        marginLeft: -spacing.medium,
+        marginRight: -spacing.medium,
+        width: `calc(100% + ${spacing.medium * 2}px)`,
+        boxSizing: 'border-box' as const
+      };
+
       return (
-        <Column gap="zero" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#070606' }}>
-          <Row style={{ padding: 0, height: 50 }}>
+        <Column
+          gap="zero"
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            backgroundColor: '#070606',
+            ...bleedStyle
+          }}>
+          <Row style={{ padding: 0, height: 50, gap: spacing.medium, paddingLeft: spacing.medium, paddingRight: spacing.medium }}>
             {items.map((item) => {
               const isActiveItem = item.key === activeTab;
               return (
-                <Row key={item.key} onClick={() => onTabClick(item.key)} mx="md" data-testid={`tab-item-${item.key}`}>
+                <Row key={item.key} onClick={() => onTabClick(item.key)} data-testid={`tab-item-${item.key}`}>
                   <Column gap="zero" justifyCenter itemsCenter>
                     {typeof item.label === 'string' ? (
                       <Text text={item.label} color={isActiveItem ? 'gold' : 'textDim'} size="md" />
@@ -82,14 +105,12 @@ export function Tabs({ preset, items, defaultActiveKey, activeKey, onTabClick }:
               );
             })}
           </Row>
-          <Row
+          <div
             style={{
-              position: 'relative',
-              borderBottomWidth: 1,
-              borderColor: colors.line,
-              left: 0,
-              right: 0,
-              marginTop: -10
+              height: 1,
+              backgroundColor: colors.line,
+              marginTop: -10,
+              width: '100%'
             }}
           />
         </Column>

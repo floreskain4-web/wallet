@@ -1,15 +1,21 @@
 import { useMemo, useState } from 'react';
 
-import { Button, Column, Content, Footer, Header, Layout, Row, Text } from '@/ui/components';
+import { Button, Column, Content, Footer, Header, Layout, Row, Text, Tooltip } from '@/ui/components';
 import { BRC20Ticker } from '@/ui/components/BRC20Ticker';
 import { TabBar } from '@/ui/components/TabBar';
 import { TickUsdWithoutPrice, TokenType } from '@/ui/components/TickUsd';
 import { TokenScreenIcon } from '@/ui/components/TokenScreenIcon';
 import { colors } from '@/ui/theme/colors';
-import { BRC20TokenScreenTabKey, useBRC20TokenScreenLogic, useNavigation } from '@unisat/wallet-state';
+import { fontSizes } from '@/ui/theme/font';
+import {
+  BRC20TokenScreenTabKey,
+  useBRC20TokenScreenLogic,
+  useNavigation,
+  type BRC20OutWalletBalanceItem
+} from '@unisat/wallet-state';
 
 import { BRC20InSwapMoreSheet } from './components/BRC20InSwapMoreSheet';
-import { BRC20OutWalletBalance, type BRC20OutWalletBalanceItem } from './components/BRC20OutWalletBalance';
+import { BRC20OutWalletBalance } from './components/BRC20OutWalletBalance';
 import { BRC20TokenDetail } from './components/BRC20TokenDetail';
 import { BRC20TokenHistory } from './components/BRC20TokenHistory';
 
@@ -40,6 +46,8 @@ export default function BRC20TokenScreen() {
   } as const;
   const {
     totalBalance,
+    displayTotalBalance,
+
     showSwapBalance,
     showProgBalance,
     outWalletBalanceItems,
@@ -135,7 +143,21 @@ export default function BRC20TokenScreen() {
               </Row>
             </Row>
             <Column itemsCenter fullX justifyCenter>
-              <Text text={`${totalBalance}`} preset="bold" textCenter size="xxl" wrap digital color="white" />
+              <Tooltip
+                title={totalBalance}
+                overlayStyle={{
+                  fontSize: fontSizes.xs
+                }}>
+                <Text
+                  text={totalBalance ? displayTotalBalance : '--'}
+                  preset="bold"
+                  textCenter
+                  size="xxl"
+                  wrap
+                  digital
+                  color="white"
+                />
+              </Tooltip>
             </Column>
             <Row justifyCenter fullX>
               <TickUsdWithoutPrice tick={ticker} balance={totalBalance} type={TokenType.BRC20} size={'md'} />

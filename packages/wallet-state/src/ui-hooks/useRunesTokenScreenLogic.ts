@@ -5,6 +5,7 @@ import { useI18n, useNavigation, useTools, useWallet } from 'src/context'
 import {
   useChainType,
   useCurrentAccount,
+  useCurrentAccountCapabilities,
   useOrdinalsWebsite,
   useResetTxState,
   useRunesIconInfo,
@@ -62,6 +63,7 @@ export function useRunesTokenScreenLogic() {
   const wallet = useWallet()
 
   const account = useCurrentAccount()
+  const accountCapabilities = useCurrentAccountCapabilities()
 
   const [loading, setLoading] = useState(true)
 
@@ -78,11 +80,11 @@ export function useRunesTokenScreenLogic() {
 
   const enableTransfer = useMemo(() => {
     let enable = false
-    if (tokenSummary.runeBalance.amount !== '0') {
+    if (accountCapabilities.canCreateSigningRequest && tokenSummary.runeBalance.amount !== '0') {
       enable = true
     }
     return enable
-  }, [tokenSummary])
+  }, [accountCapabilities.canCreateSigningRequest, tokenSummary])
 
   const tools = useTools()
 
@@ -131,6 +133,12 @@ export function useRunesTokenScreenLogic() {
     nav.navToUrl(runesExplorerUrl)
   }
 
+  const onClickParent = () => {
+    if (tokenSummary.runeInfo.parent) {
+      nav.navToExplorerInscription(tokenSummary.runeInfo.parent)
+    }
+  }
+
   return {
     runeid,
     tokenSummary,
@@ -148,6 +156,7 @@ export function useRunesTokenScreenLogic() {
 
     enableTransfer,
     onClickSend,
+    onClickParent,
 
     enableTrade,
     onClickTrade,

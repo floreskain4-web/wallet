@@ -1,5 +1,11 @@
 # @unisat/wallet-bitcoin
 
+## 1.2.0
+
+### Minor Changes
+
+- Improve safety
+
 ## 1.1.0
 
 ### Minor Changes

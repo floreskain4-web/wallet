@@ -31,6 +31,7 @@ export interface ContextData {
   transferableList: TokenTransfer[]
   inscriptionIdSet: Set<string>
   receiver: string
+  enableRBF: boolean
   rawTxInfo: RawTxInfo
   tokenInfo: TokenInfo
 }
@@ -42,6 +43,7 @@ export interface UpdateContextDataParams {
   transferableList?: TokenTransfer[]
   inscriptionIdSet?: Set<string>
   receiver?: string
+  enableRBF?: boolean
   rawTxInfo?: RawTxInfo
 }
 
@@ -52,6 +54,7 @@ export interface BRC20SendStepParams {
 
 export function useBRC20SendScreenLogic() {
   const nav = useNavigation()
+  const wallet = useWallet()
 
   const props = nav.getRouteState<'BRC20SendScreen'>()
 
@@ -66,6 +69,7 @@ export function useBRC20SendScreenLogic() {
     transferableList: [],
     inscriptionIdSet: new Set(selectedInscriptionIds),
     receiver: '',
+    enableRBF: true,
     rawTxInfo: {
       psbtHex: '',
       rawtx: '',
@@ -110,6 +114,12 @@ export function useBRC20SendScreenLogic() {
   }
 
   const { t } = useI18n()
+
+  useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      updateContextData({ enableRBF })
+    })
+  }, [wallet, updateContextData])
 
   return {
     t,
@@ -195,6 +205,7 @@ export function useBRC20SendScreenLogicStep2({
           inscriptionId: inscriptionIds[0],
           feeRate: feeRateBar.feeRate,
           outputValue: getAddressUtxoDust(contextData.receiver),
+          enableRBF: contextData.enableRBF,
         })
         nav.navigate('TxConfirmScreen', { toSignData })
       } else {
@@ -202,6 +213,7 @@ export function useBRC20SendScreenLogicStep2({
           toAddressInfo: { address: contextData.receiver, domain: '' },
           inscriptionIds,
           feeRate: feeRateBar.feeRate,
+          enableRBF: contextData.enableRBF,
         })
         nav.navigate('TxConfirmScreen', { toSignData })
       }

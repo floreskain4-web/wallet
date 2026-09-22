@@ -86,9 +86,6 @@
   "all_read": {
     "message": "全部已讀"
   },
-  "allow_sign_data_requests": {
-    "message": "允許簽署資料請求"
-  },
   "allow_this_site_to_switch_the_chain": {
     "message": "允許此網站切換鏈嗎？"
   },
@@ -129,7 +126,7 @@
     "message": "ARC20 銷毀風險清單"
   },
   "are_not_supported": {
-    "message": "不支援。"
+    "message": ""
   },
   "are_not_supported_yet": {
     "message": "尚不支援。"
@@ -319,12 +316,6 @@
   },
   "cap": {
     "message": "鑄造次數"
-  },
-  "cat": {
-    "message": "CAT"
-  },
-  "cat20_warning_nomerge": {
-    "message": "您至少需要 2 個 UTXO 才能合併"
   },
   "cbor_data_is_required_for_parsing_cosmos_signature": {
     "message": "解析 Cosmos 簽章需要 CBOR data"
@@ -570,7 +561,7 @@
     "message": "建立觀察錢包"
   },
   "create_with_mnemonics_12words": {
-    "message": "使用助記詞創建 (12 個單詞)"
+    "message": "使用助記詞創建"
   },
   "current": {
     "message": "當前"
@@ -719,15 +710,6 @@
   "enable_atomicals_assets_warning": {
     "message": "Atomicals 資產將不再顯示在錢包中，並且可以作為常規餘額花費。請謹慎操作。"
   },
-  "enable_sign_data_popover_warning": {
-    "message": "允許簽署資料請求可能使您容易受到釣魚攻擊。請務必檢查 URL，並在簽署包含程式碼的訊息時保持警惕。"
-  },
-  "enable_sign_data_popover_warning_2": {
-    "message": "如果您被要求開啟此設定，您可能正在遭受詐騙"
-  },
-  "enable_sign_data_warning": {
-    "message": "如果您啟用此設定，您可能會收到無法讀取的簽署請求。簽署您不理解的訊息，可能代表您同意交出您的資金和 NFT。您將面臨釣魚攻擊的風險。請關閉簽署資料 (signData) 功能以保護自己。"
-  },
   "enable_unconfirmed_balance": {
     "message": "啟用未確認餘額"
   },
@@ -822,7 +804,7 @@
     "message": "對於 Atomicals 資產，"
   },
   "for_ordinals_assets": {
-    "message": "對於 Ordinals 資產，"
+    "message": "UniSat 錢包目前暫不支持"
   },
   "from": {
     "message": "從"
@@ -974,9 +956,6 @@
   "i_have_signed_scan_result": {
     "message": "我已簽名，掃描結果"
   },
-  "i_only_sign_what_i_understand": {
-    "message": "我只簽署我理解的內容"
-  },
   "i_saved_my_secret_recovery_phrase": {
     "message": "我已儲存我的助記詞"
   },
@@ -1124,6 +1103,9 @@
   "invalid_psbt": {
     "message": "無效的 PSBT"
   },
+  "invalid_public_key": {
+    "message": "無效的公鑰"
+  },
   "invalid_public_key_in_tosigninput": {
     "message": "toSignInput 中的公鑰無效"
   },
@@ -1195,18 +1177,6 @@
   },
   "learn_more_about_keystone": {
     "message": "了解更多關於 Keystone"
-  },
-  "legacy_address_warning": {
-    "message": "不建議使用Legacy地址，因為它們可能會導致更高的交易費用或意外鎖定CAT20餘額。"
-  },
-  "legacy_address_warning_2": {
-    "message": "不建議將交易發送到Legacy地址，因為這可能導致CAT20被意外花費"
-  },
-  "legacy_address_warning_3": {
-    "message": "不建議使用Legacy地址，因為它們可能會導致更高的交易費用或意外鎖定CAT20餘額"
-  },
-  "legacy_address_warning_4": {
-    "message": "不建議將交易發送到Legacy地址，因為這可能導致CAT20被意外花費"
   },
   "legacy_p2pkh": {
     "message": "傳統 (P2PKH)"
@@ -1307,9 +1277,6 @@
   "merge_utxos_failed": {
     "message": "合併失敗"
   },
-  "merge_utxos_for_cat20_asset": {
-    "message": "合併 CAT20 資產的 UTXO"
-  },
   "merge_utxos_is_not_supported_for_keystone_yet": {
     "message": "Keystone 尚不支援合併 UTXO"
   },
@@ -1369,6 +1336,9 @@
   },
   "mnemonics_12_words": {
     "message": "12 詞"
+  },
+  "mnemonics_12_words_not_recommended": {
+    "message": "建議使用 24 個助記詞。相比於 12 個助記詞, 24 個助記詞具有更高的隨機性，安全等級也更高。"
   },
   "mnemonics_24_words": {
     "message": "24 詞"
@@ -1447,6 +1417,9 @@
   },
   "multiple_assets_risk_title": {
     "message": "偵測到多種資產"
+  },
+  "multiple_risks_detected_description": {
+    "message": "此交易涉及多項風險。請在繼續前仔細檢查。"
   },
   "multiple_inscriptions_are_mixed_together_please_sp": {
     "message": "多個銘文混合在一起。請先分割它們。"
@@ -1778,6 +1751,9 @@
   "psbt_data": {
     "message": "PSBT 資料："
   },
+  "signed_psbt_data": {
+    "message": "已簽名 PSBT 資料"
+  },
   "public_key_must_be_compressed_secp256k1_ie_33_byte": {
     "message": "公鑰必須是壓縮的 secp256k1，即 33 位元組，以 0x02 或 0x03 開頭"
   },
@@ -1791,7 +1767,7 @@
     "message": "範圍"
   },
   "rare_sats": {
-    "message": "稀有聰 (Rare sats)"
+    "message": "稀有聰 (Rare Sats)"
   },
   "rate_us": {
     "message": "給我們評分"
@@ -1800,7 +1776,7 @@
     "message": "RBF"
   },
   "rbf_tip": {
-    "message": "允許交易被替換的功能。"
+    "message": "RBF 會將這筆未確認交易標記為可替換，讓你可以用更高的手續費重新嘗試。即使 RBF 已關閉，這筆交易仍可能因網路政策而可被替換。"
   },
   "receive": {
     "message": "接收"
@@ -1857,7 +1833,7 @@
     "message": "使用助記詞恢復"
   },
   "restore_from_mnemonics_12words24words": {
-    "message": "從助記詞恢復 (12 個單詞、24 個單詞)"
+    "message": "從助記詞恢復"
   },
   "restore_from_single_private_key": {
     "message": "從單一私鑰恢復"
@@ -2000,9 +1976,6 @@
   "send": {
     "message": "發送"
   },
-  "send_CAT721": {
-    "message": "發送 CAT721"
-  },
   "send_alkanes": {
     "message": "發送 Alkanes"
   },
@@ -2017,15 +1990,6 @@
   },
   "send_atomicals_inscription": {
     "message": "發送 Atomicals 銘文"
-  },
-  "send_cat20": {
-    "message": "發送 CAT20"
-  },
-  "send_cat20_is_not_supported_for_keystone_yet": {
-    "message": "Keystone 尚不支援發送 CAT20"
-  },
-  "send_cat721": {
-    "message": "發送 CAT721"
   },
   "send_inscription": {
     "message": "您可以點擊銘文直接發送。"
@@ -2087,17 +2051,17 @@
   "derive_context_hash_app_name": {
     "message": "應用程式"
   },
+  "derive_context_hash_account": {
+    "message": "帳戶"
+  },
+  "derive_context_hash_network": {
+    "message": "網路"
+  },
   "derive_context_hash_context": {
     "message": "上下文"
   },
   "derive_context_hash_warning": {
     "message": "僅在您信任此網站時才批准。"
-  },
-  "sign_data_request": {
-    "message": "簽署資料請求"
-  },
-  "sign_data_requests": {
-    "message": "簽署資料請求"
   },
   "sign_multiple_transactions": {
     "message": "簽署多筆交易"
@@ -2119,9 +2083,6 @@
   },
   "signdata_is_required_for_cosmos_signing": {
     "message": "Cosmos 簽署需要 signData"
-  },
-  "signdata_required_tip": {
-    "message": "您需要在「設定 -> 進階」中啟用「簽署資料請求」功能才能繼續。"
   },
   "signed": {
     "message": "已簽署"
@@ -2507,9 +2468,6 @@
   "understand_and_accept_the_risks_associated_with_this_transaction": {
     "message": "我了解並接受此交易所涉及的風險。"
   },
-  "understand_sign_data_warning": {
-    "message": "我了解如果啟用簽署資料請求，我可能會損失所有資金和 NFT。"
-  },
   "unisat": {
     "message": "UNISAT"
   },
@@ -2559,10 +2517,25 @@
     "message": "使用者已拒絕請求。"
   },
   "utxo_indexing_risk_description": {
-    "message": "所選的UTXO屬於仍在索引中的交易。為確保交易的安全性和可靠性，請在繼續之前等待索引完成。"
+    "message": "此 UTXO 仍在索引中，其附帶資產可能尚未完全識別。我們強烈建議等待索引完成，通常約需 5 分鐘。"
+  },
+  "utxo_indexing_in_progress": {
+    "message": "索引處理中"
+  },
+  "utxo_indexing_risk_asset_warning": {
+    "message": "現在發送可能導致永久性資產損失。"
+  },
+  "utxo_indexing_risk_agreement": {
+    "message": "我了解這可能導致永久性資產損失，仍要發送此 UTXO"
   },
   "utxo_indexing_risk_title": {
-    "message": "UTXO索引正在進行中"
+    "message": "請自行承擔風險"
+  },
+  "understand_the_risks_continue": {
+    "message": "了解風險並繼續"
+  },
+  "try_again_later": {
+    "message": "稍後再試"
   },
   "utxo_not_found": {
     "message": "找不到 UTXO。"
@@ -2639,9 +2612,6 @@
   "you_are_signing": {
     "message": "您正在簽署："
   },
-  "you_are_signing_data": {
-    "message": "您正在簽署資料："
-  },
   "you_can_unlock_these_assets_by_using_the_utxos_tools": {
     "message": "您可以使用 UTXO 工具解鎖這些資產。"
   },
@@ -2668,5 +2638,56 @@
   },
   "your_balance_have_to_be_merged": {
     "message": "您的 "
+  },
+  "connect_to_readonly_wallet": {
+    "message": "連接只讀錢包"
+  },
+  "copy_message_to_sign": {
+    "message": "複製待簽署訊息"
+  },
+  "create_readonly_wallet": {
+    "message": "建立只讀錢包"
+  },
+  "enter_your_signature": {
+    "message": "輸入您的簽名"
+  },
+  "invalid_signature": {
+    "message": "無效的簽名"
+  },
+  "please_enter_your_signature": {
+    "message": "請輸入您的簽名"
+  },
+  "public_key": {
+    "message": "公鑰"
+  },
+  "readonly_wallet": {
+    "message": "只讀錢包"
+  },
+  "copy_signing_params": {
+    "message": "複製簽署參數"
+  },
+  "readonly_signing": {
+    "message": "離線簽署"
+  },
+  "readonly_signing_copy_step": {
+    "message": "複製簽署請求"
+  },
+  "readonly_signing_copy_button": {
+    "message": "複製請求"
+  },
+  "readonly_signing_paste_step": {
+    "message": "貼上已簽署 PSBT"
+  },
+  "readonly_signing_paste_placeholder": {
+    "message": "已簽署 PSBT Hex"
+  },
+  "readonly_signing_paste_signature_step": {
+    "message": "貼上簽名"
+  },
+  "readonly_signing_signature_placeholder": {
+    "message": "簽名"
+  },
+  "load_more_items": {
+    "message": "再載入 {count} 筆"
   }
 }

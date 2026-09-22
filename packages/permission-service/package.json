@@ -1,6 +1,6 @@
 {
   "name": "@unisat/permission-service",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Cross-platform permission management service for web3 applications",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
@@ -29,7 +29,8 @@
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "prepublishOnly": "pnpm clean && pnpm test && pnpm build"
   },
   "keywords": [
     "bitcoin",

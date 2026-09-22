@@ -5,6 +5,7 @@ import {
   useAlkanesIconInfo,
   useAlkanesTokenInfoExplorerUrl,
   useCurrentAccount,
+  useCurrentAccountCapabilities,
   useI18n,
   useNavigation,
   useResetTxState,
@@ -48,6 +49,7 @@ export function useAlkanesTokenScreenLogic() {
   const wallet = useWallet()
 
   const account = useCurrentAccount()
+  const accountCapabilities = useCurrentAccountCapabilities()
 
   const [loading, setLoading] = useState(true)
 
@@ -70,11 +72,11 @@ export function useAlkanesTokenScreenLogic() {
 
   const enableTransfer = useMemo(() => {
     let enable = false
-    if (tokenSummary.tokenBalance.amount !== '0') {
+    if (accountCapabilities.canCreateSigningRequest && tokenSummary.tokenBalance.amount !== '0') {
       enable = true
     }
     return enable
-  }, [tokenSummary])
+  }, [accountCapabilities.canCreateSigningRequest, tokenSummary])
 
   const tools = useTools()
 

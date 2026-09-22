@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { colors } from '@/ui/theme/colors';
 
@@ -25,24 +25,16 @@ interface TabBarProps {
 
 export function TabBar(props: TabBarProps) {
   const { items, defaultActiveKey, activeKey, onTabClick, progressEnabled, preset } = props;
-  const [tabKey, setTabKey] = useState(defaultActiveKey);
+  const [uncontrolledTabKey, setUncontrolledTabKey] = useState(defaultActiveKey);
+  const tabKey = activeKey ?? uncontrolledTabKey;
+  const progress = items.findIndex((v) => v.key === tabKey);
 
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const curIndex = items.findIndex((v) => v.key === tabKey);
-    setProgress(curIndex);
-    onTabClick(tabKey);
-  }, [tabKey]);
-
-  useEffect(() => {
-    if (activeKey !== tabKey) {
-      setTabKey(activeKey);
-
-      const curIndex = items.findIndex((v) => v.key === activeKey);
-      setProgress(curIndex);
+  const selectTab = (key: string | number) => {
+    if (activeKey === undefined) {
+      setUncontrolledTabKey(key);
     }
-  }, [activeKey]);
+    onTabClick(key as string);
+  };
 
   if (preset == 'number-page') {
     return (
@@ -66,8 +58,9 @@ export function TabBar(props: TabBarProps) {
               justifyCenter
               itemsCenter
               onClick={() => {
-                setTabKey(v.key);
-              }}>
+                selectTab(v.key);
+              }}
+            >
               <Text text={v.label} color={'white'} />
             </Column>
           );
@@ -93,8 +86,9 @@ export function TabBar(props: TabBarProps) {
                 key={v.key}
                 itemsCenter
                 onClick={() => {
-                  setTabKey(v.key);
-                }}>
+                  selectTab(v.key);
+                }}
+              >
                 <Text
                   text={v.label}
                   size={'md'}
@@ -133,12 +127,20 @@ export function TabBar(props: TabBarProps) {
             return (
               <Column
                 key={v.key}
-                style={{ borderWidth: 1, borderRadius: 20, backgroundColor: '#322D1F' }}
-                color={isSelected ? 'gold' : 'white_muted'}
+                itemsCenter
+                justifyCenter
+                px="lg"
+                style={{
+                  height: 32,
+                  borderRadius: 16,
+                  borderWidth: 0,
+                  backgroundColor: isSelected ? '#322D1F' : 'rgba(255, 255, 255, 0.08)'
+                }}
                 onClick={() => {
-                  setTabKey(v.key);
-                }}>
-                <Text text={v.label} size="xs" color={isSelected ? 'gold' : 'white_muted'} mx="md" my="sm" />
+                  selectTab(v.key);
+                }}
+              >
+                <Text text={v.label} size="xs" color={isSelected ? 'gold' : 'white_muted'} />
               </Column>
             );
           }
@@ -156,8 +158,9 @@ export function TabBar(props: TabBarProps) {
             <Column
               key={v.key}
               onClick={() => {
-                setTabKey(v.key);
-              }}>
+                selectTab(v.key);
+              }}
+            >
               <Text text={v.label} color={isSelected ? 'white' : 'textDim'} />
             </Column>
           );
@@ -181,8 +184,9 @@ export function TabBar(props: TabBarProps) {
               key={v.key}
               classname={isSelected ? 'selected-tab' : ''}
               onClick={() => {
-                setTabKey(v.key);
-              }}>
+                selectTab(v.key);
+              }}
+            >
               <Text text={v.label} color={isSelected ? 'gold' : 'white'} />
             </Column>
           );

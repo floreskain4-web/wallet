@@ -1,87 +1,117 @@
 import { describe, expect, it } from 'vitest'
 
-import { deriveContextHash, parseHexContext, validateAppName } from '../src/keyrings/derive-context-hash'
+import {
+  deriveContextHash,
+  parseHexContext,
+  validateAppName,
+} from '../src/keyrings/derive-context-hash'
 
-describe('deriveContextHash', () => {
+const hex = (h: string) => Uint8Array.from(Buffer.from(h, 'hex'))
+
+// Pinned test pubkey: compressed SEC1 at m/44'/0'/0'/0/0 of the canonical
+// "abandon × 11 about" BIP-39 mnemonic.
+const SPEC_PUBKEY = hex('03aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e')
+
+// A second valid compressed pubkey for cross-tests (different parity, different x).
+const OTHER_PUBKEY = hex('02' + '11'.repeat(32))
+
+describe('deriveContextHash (v2.0)', () => {
   const APP_NAME = 'test-app'
+  const NETWORK = 'bitcoin-mainnet'
 
   describe('output format', () => {
     it('returns a 64-character hex string (32 bytes)', () => {
       const ctx = parseHexContext('deadbeef')
       const key = new Uint8Array(32).fill(0xab)
-      const result = deriveContextHash(key, APP_NAME, ctx)
+      const result = deriveContextHash(key, APP_NAME, NETWORK, SPEC_PUBKEY, ctx)
       expect(result).toHaveLength(64)
       expect(result).toMatch(/^[0-9a-f]{64}$/)
     })
   })
 
   describe('determinism', () => {
-    it('produces identical results for same key + appName + context', () => {
+    it('produces identical results for same (key, appName, network, pubkey, context)', () => {
       const ctx = parseHexContext('deadbeef')
       const key = new Uint8Array(32).fill(0xab)
-      const a = deriveContextHash(key, APP_NAME, ctx)
-      const b = deriveContextHash(key, APP_NAME, ctx)
+      const a = deriveContextHash(key, APP_NAME, NETWORK, SPEC_PUBKEY, ctx)
+      const b = deriveContextHash(key, APP_NAME, NETWORK, SPEC_PUBKEY, ctx)
       expect(a).toBe(b)
     })
   })
 
-  describe('context differentiation', () => {
-    it('produces different results for different contexts', () => {
-      const key = new Uint8Array(32).fill(0xab)
-      const a = deriveContextHash(key, APP_NAME, parseHexContext('01'))
-      const b = deriveContextHash(key, APP_NAME, parseHexContext('02'))
+  describe('input differentiation', () => {
+    const key = new Uint8Array(32).fill(0xab)
+    const ctx = parseHexContext('deadbeef')
+
+    it('different contexts produce different outputs', () => {
+      const a = deriveContextHash(key, APP_NAME, NETWORK, SPEC_PUBKEY, parseHexContext('01'))
+      const b = deriveContextHash(key, APP_NAME, NETWORK, SPEC_PUBKEY, parseHexContext('02'))
       expect(a).not.toBe(b)
     })
 
-    it('produces different results for different appNames', () => {
-      const key = new Uint8Array(32).fill(0xab)
-      const ctx = parseHexContext('deadbeef')
-      const a = deriveContextHash(key, 'app-one', ctx)
-      const b = deriveContextHash(key, 'app-two', ctx)
+    it('different appNames produce different outputs', () => {
+      const a = deriveContextHash(key, 'app-one', NETWORK, SPEC_PUBKEY, ctx)
+      const b = deriveContextHash(key, 'app-two', NETWORK, SPEC_PUBKEY, ctx)
+      expect(a).not.toBe(b)
+    })
+
+    it('different networks produce different outputs', () => {
+      const a = deriveContextHash(key, APP_NAME, 'bitcoin-mainnet', SPEC_PUBKEY, ctx)
+      const b = deriveContextHash(key, APP_NAME, 'bitcoin-testnet', SPEC_PUBKEY, ctx)
+      expect(a).not.toBe(b)
+    })
+
+    it('different pubkeys produce different outputs', () => {
+      const a = deriveContextHash(key, APP_NAME, NETWORK, SPEC_PUBKEY, ctx)
+      const b = deriveContextHash(key, APP_NAME, NETWORK, OTHER_PUBKEY, ctx)
+      expect(a).not.toBe(b)
+    })
+
+    it('different IKM produces different outputs', () => {
+      const ikmA = new Uint8Array(32).fill(0xab)
+      const ikmB = new Uint8Array(32).fill(0xcd)
+      const a = deriveContextHash(ikmA, APP_NAME, NETWORK, SPEC_PUBKEY, ctx)
+      const b = deriveContextHash(ikmB, APP_NAME, NETWORK, SPEC_PUBKEY, ctx)
       expect(a).not.toBe(b)
     })
   })
 
   describe('input validation', () => {
+    const ctx = parseHexContext('deadbeef')
+    const key = new Uint8Array(32).fill(0xab)
+
     it('rejects key material that is not 32 bytes', () => {
-      const ctx = parseHexContext('deadbeef')
-      expect(() => deriveContextHash(new Uint8Array(16), APP_NAME, ctx)).toThrow(
-        'Input key material must be 32 bytes, got 16'
-      )
-      expect(() => deriveContextHash(new Uint8Array(64), APP_NAME, ctx)).toThrow(
-        'Input key material must be 32 bytes, got 64'
-      )
+      expect(() =>
+        deriveContextHash(new Uint8Array(16), APP_NAME, NETWORK, SPEC_PUBKEY, ctx),
+      ).toThrow('Input key material must be 32 bytes, got 16')
+      expect(() =>
+        deriveContextHash(new Uint8Array(64), APP_NAME, NETWORK, SPEC_PUBKEY, ctx),
+      ).toThrow('Input key material must be 32 bytes, got 64')
     })
 
     it('rejects invalid appName', () => {
-      const key = new Uint8Array(32).fill(0xab)
-      const ctx = parseHexContext('deadbeef')
-      expect(() => deriveContextHash(key, '', ctx)).toThrow('non-empty string')
-      expect(() => deriveContextHash(key, 'UPPER', ctx)).toThrow('lowercase')
-      expect(() => deriveContextHash(key, 'has space', ctx)).toThrow('lowercase')
+      expect(() => deriveContextHash(key, '', NETWORK, SPEC_PUBKEY, ctx)).toThrow('non-empty string')
+      expect(() => deriveContextHash(key, 'UPPER', NETWORK, SPEC_PUBKEY, ctx)).toThrow('lowercase')
+      expect(() => deriveContextHash(key, 'has space', NETWORK, SPEC_PUBKEY, ctx)).toThrow('lowercase')
     })
+
   })
 
-  describe('known-answer tests (spec vectors)', () => {
-    // Spec test vectors use BIP-39 mnemonic "abandon...about" (no passphrase)
-    // IKM = BIP-32 private key at m/73681862'
+  describe('pinned wallet-integration vector', () => {
+    // BIP-39 "abandon × 11 about", empty passphrase
+    // ikm = BIP-32 private key at m/73681862' (hex):
     const IKM_HEX = '391cdb922097ec9c96fc13cadb01d5745ccf31f5dbec3a38103440714779ec85'
     const ikm = new Uint8Array(Buffer.from(IKM_HEX, 'hex'))
 
-    it('vector 1: context=deadbeef', () => {
-      const result = deriveContextHash(ikm, 'test-app', parseHexContext('deadbeef'))
-      expect(result).toBe('3b0e2d90a01122eed8a520648073892f6b2d8f4419216023d63cdbd49500fca3')
-    })
-
-    it('vector 2: context=00', () => {
-      const result = deriveContextHash(ikm, 'test-app', parseHexContext('00'))
-      expect(result).toBe('50775126782c1a5e4d60daa4666b2c7590f0b5a445a4115b0abd411467c92597')
-    })
-
-    it('vector 3: context=64 zero bytes', () => {
-      const context128zeros = '00'.repeat(64) // 64 zero bytes = 128 hex chars
-      const result = deriveContextHash(ikm, 'test-app', parseHexContext(context128zeros))
-      expect(result).toBe('d81e4a91f32eabd34df0e55ca36f26f211af65dfe575b7201c95baaa6608cdd9')
+    it('reproduces the pinned vector exactly', () => {
+      const result = deriveContextHash(
+        ikm,
+        'test-app',
+        'bitcoin-mainnet',
+        SPEC_PUBKEY,
+        parseHexContext('deadbeef'),
+      )
+      expect(result).toBe('f82ced3be0e29591a7863ece03d65f79fb494fe0de7203549855f462455df008')
     })
   })
 })

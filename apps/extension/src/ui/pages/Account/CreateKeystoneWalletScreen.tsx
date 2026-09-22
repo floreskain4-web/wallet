@@ -33,6 +33,19 @@ interface ContextData {
   customHdPath: string;
 }
 
+function getErrorMessage(error: unknown, fallbackMessage: string): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+  return fallbackMessage;
+}
+
 function Step1({ onNext, setIsUSB }) {
   const navigate = useNavigate();
 
@@ -192,6 +205,7 @@ function Step3({
   const navigate = useNavigate();
   const wallet = useWallet();
   const tools = useTools();
+  const { t } = useI18n();
   const [addressType, setAddressType] = useState(AddressType.P2WPKH);
   const addressTypes = useMemo(() => {
     return ADDRESS_TYPES.filter((item) => item.displayIndex < 4).sort((a, b) => a.displayIndex - b.displayIndex);
@@ -238,7 +252,7 @@ function Step3({
         );
       }
     } catch (e) {
-      setError((e as any).message);
+      setError(getErrorMessage(e, t('unknown_error')));
       return;
     }
     wallet.setShowSafeNotice(true);
@@ -395,8 +409,6 @@ function Step3({
     }
   };
 
-  const { t } = useI18n();
-
   return (
     <Layout>
       <Header onBack={onBack} title={t('address_type')} />
@@ -446,17 +458,21 @@ function Step3({
             // );
           })}
         </Column>
-        <Text text={t('custom_hdpath_optional')} preset="bold" mt="lg" />
-        <Column>
-          <Input
-            placeholder={t('custom_hdpath')}
-            value={pathText}
-            onChange={(e) => {
-              submitCustomHdPath(e.target.value);
-            }}
-          />
-        </Column>
-        {pathError && <Text text={pathError} color="error" />}
+        {!isScanned && (
+          <>
+            <Text text={t('custom_hdpath_optional')} preset="bold" mt="lg" />
+            <Column>
+              <Input
+                placeholder={t('custom_hdpath')}
+                value={pathText}
+                onChange={(e) => {
+                  submitCustomHdPath(e.target.value);
+                }}
+              />
+            </Column>
+            {pathError && <Text text={pathError} color="error" />}
+          </>
+        )}
         {error && <Text text={error} color="error" />}
       </Content>
       {error && (

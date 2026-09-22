@@ -9,6 +9,7 @@ interface TooltipProps {
   destroyTooltipOnHide?: boolean;
   autoAdjustOverflow?: boolean;
   arrowPointAtCenter?: boolean;
+  block?: boolean;
   align?: {
     points?: string[];
     offset?: number[];
@@ -28,6 +29,7 @@ export function Tooltip({
   destroyTooltipOnHide = false,
   autoAdjustOverflow = true,
   arrowPointAtCenter = false,
+  block = false,
   align = {}
 }: TooltipProps) {
   const [visible, setVisible] = useState(false);
@@ -130,6 +132,7 @@ export function Tooltip({
   }, [visible, placement]);
 
   const handleMouseEnter = () => {
+    if (!title) return;
     setVisible(true);
   };
 
@@ -167,7 +170,12 @@ export function Tooltip({
         ref={triggerRef}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        style={{ display: 'inline-block' }}>
+        style={{
+          display: block ? 'block' : 'inline-block',
+          width: block ? '100%' : undefined,
+          minWidth: block ? 0 : undefined,
+          overflow: block ? 'hidden' : undefined
+        }}>
         {children}
       </div>
       {visible && !destroyTooltipOnHide && (

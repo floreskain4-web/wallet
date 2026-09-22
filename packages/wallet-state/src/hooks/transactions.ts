@@ -5,7 +5,7 @@ import { ToAddressInfo, ToSignData, UnspentOutput } from '@unisat/wallet-shared'
 import { numUtils, timeUtils } from '@unisat/base-utils'
 import { AppState, useI18n, useTools } from '..'
 import { useWallet } from '../context/WalletContext'
-import { useAccountAddress, useCurrentAccount } from '../hooks/accounts'
+import { useAccountAddress, useCurrentAccount, useCurrentAccountCapabilities } from '../hooks/accounts'
 import { accountActions } from '../reducers/accounts'
 import { transactionsActions } from '../reducers/transactions'
 import { useAppDispatch, useAppSelector } from './base'
@@ -25,6 +25,7 @@ export function usePrepareSendBTCCallback() {
   const fromAddress = useAccountAddress()
   const utxos = useUtxos()
   const fetchUtxos = useFetchUtxosCallback()
+  const accountCapabilities = useCurrentAccountCapabilities()
 
   const { t } = useI18n()
   return useCallback(
@@ -35,6 +36,7 @@ export function usePrepareSendBTCCallback() {
       memo,
       memos,
       disableAutoAdjust,
+      enableRBF,
     }: {
       toAddressInfo: ToAddressInfo
       toAmount: number
@@ -42,7 +44,11 @@ export function usePrepareSendBTCCallback() {
       memo?: string
       memos?: string[]
       disableAutoAdjust?: boolean
+      enableRBF?: boolean
     }) => {
+      if (!accountCapabilities.canCreateSigningRequest) {
+        throw new Error(t('not_supported'))
+      }
       let _utxos: UnspentOutput[] = utxos
       if (_utxos.length === 0) {
         _utxos = await fetchUtxos()
@@ -65,6 +71,7 @@ export function usePrepareSendBTCCallback() {
           to: toAddressInfo.address,
           btcUtxos: _utxos,
           feeRate,
+          enableRBF,
         })
       } else {
         res = await wallet.createSendBTCPsbt({
@@ -72,6 +79,7 @@ export function usePrepareSendBTCCallback() {
           amount: toAmount,
           btcUtxos: _utxos,
           feeRate,
+          enableRBF,
           memo: memo!,
           memos: memos!,
         })
@@ -79,23 +87,30 @@ export function usePrepareSendBTCCallback() {
 
       return res
     },
-    [dispatch, wallet, fromAddress, utxos, fetchUtxos]
+    [dispatch, wallet, fromAddress, utxos, fetchUtxos, accountCapabilities.canCreateSigningRequest, t]
   )
 }
 
 export function usePrepareSendBypassHeadOffsetsCallback() {
   const dispatch = useAppDispatch()
   const wallet = useWallet()
+  const accountCapabilities = useCurrentAccountCapabilities()
+  const { t } = useI18n()
   return useCallback(
     async ({
       toAddressInfo,
       toAmount,
       feeRate,
+      enableRBF,
     }: {
       toAddressInfo: ToAddressInfo
       toAmount: number
       feeRate: number
+      enableRBF?: boolean
     }) => {
+      if (!accountCapabilities.canCreateSigningRequest) {
+        throw new Error(t('not_supported'))
+      }
       const res = await wallet.createSendBTCOffsetPsbt(
         [
           {
@@ -103,11 +118,12 @@ export function usePrepareSendBypassHeadOffsetsCallback() {
             satoshis: toAmount,
           },
         ],
-        feeRate
+        feeRate,
+        enableRBF
       )
       return res
     },
-    [dispatch, wallet]
+    [dispatch, wallet, accountCapabilities.canCreateSigningRequest, t]
   )
 }
 
@@ -160,18 +176,25 @@ export function usePrepareSendOrdinalsInscriptionCallback() {
   const fromAddress = useAccountAddress()
   const utxos = useUtxos()
   const fetchUtxos = useFetchUtxosCallback()
+  const accountCapabilities = useCurrentAccountCapabilities()
+  const { t } = useI18n()
   return useCallback(
     async ({
       toAddressInfo,
       inscriptionId,
       feeRate,
       outputValue,
+      enableRBF,
     }: {
       toAddressInfo: ToAddressInfo
       inscriptionId: string
       feeRate?: number
       outputValue?: number
+      enableRBF?: boolean
     }) => {
+      if (!accountCapabilities.canCreateSigningRequest) {
+        throw new Error(t('not_supported'))
+      }
       if (!feeRate) {
         const summary = await wallet.getFeeSummary()
         feeRate = summary.list[1]!.feeRate
@@ -188,11 +211,12 @@ export function usePrepareSendOrdinalsInscriptionCallback() {
         feeRate,
         outputValue: outputValue!,
         btcUtxos,
+        enableRBF,
       })
 
       return toSignData
     },
-    [dispatch, wallet, fromAddress, utxos]
+    [dispatch, wallet, fromAddress, utxos, accountCapabilities.canCreateSigningRequest, t]
   )
 }
 
@@ -202,16 +226,23 @@ export function usePrepareSendOrdinalsInscriptionsCallback() {
   const fromAddress = useAccountAddress()
   const fetchUtxos = useFetchUtxosCallback()
   const utxos = useUtxos()
+  const accountCapabilities = useCurrentAccountCapabilities()
+  const { t } = useI18n()
   return useCallback(
     async ({
       toAddressInfo,
       inscriptionIds,
       feeRate,
+      enableRBF,
     }: {
       toAddressInfo: ToAddressInfo
       inscriptionIds: string[]
       feeRate?: number
+      enableRBF?: boolean
     }) => {
+      if (!accountCapabilities.canCreateSigningRequest) {
+        throw new Error(t('not_supported'))
+      }
       if (!feeRate) {
         const summary = await wallet.getFeeSummary()
         feeRate = summary.list[1]!.feeRate
@@ -226,11 +257,12 @@ export function usePrepareSendOrdinalsInscriptionsCallback() {
         inscriptionIds,
         feeRate,
         btcUtxos,
+        enableRBF,
       })
 
       return res
     },
-    [dispatch, wallet, fromAddress, utxos]
+    [dispatch, wallet, fromAddress, utxos, accountCapabilities.canCreateSigningRequest, t]
   )
 }
 
@@ -241,16 +273,23 @@ export function useCreateSplitTxCallback() {
   const utxos = useUtxos()
   const fetchUtxos = useFetchUtxosCallback()
   const account = useCurrentAccount()
+  const accountCapabilities = useCurrentAccountCapabilities()
+  const { t } = useI18n()
   return useCallback(
     async ({
       inscriptionId,
       feeRate,
       outputValue,
+      enableRBF,
     }: {
       inscriptionId: string
       feeRate: number
       outputValue: number
+      enableRBF?: boolean
     }) => {
+      if (!accountCapabilities.canCreateSigningRequest) {
+        throw new Error(t('not_supported'))
+      }
       let btcUtxos = utxos
       if (btcUtxos.length === 0) {
         btcUtxos = await fetchUtxos()
@@ -261,11 +300,12 @@ export function useCreateSplitTxCallback() {
         feeRate,
         outputValue,
         btcUtxos,
+        enableRBF,
       })
 
       return res
     },
-    [dispatch, wallet, fromAddress, utxos]
+    [dispatch, wallet, fromAddress, utxos, accountCapabilities.canCreateSigningRequest, t]
   )
 }
 
@@ -378,6 +418,8 @@ export function usePrepareSendRunesCallback() {
   const assetUtxosRunes = useAssetUtxosRunes()
   const fetchAssetUtxosRunes = useFetchAssetUtxosRunesCallback()
   const account = useCurrentAccount()
+  const accountCapabilities = useCurrentAccountCapabilities()
+  const { t } = useI18n()
   return useCallback(
     async ({
       toAddressInfo,
@@ -385,13 +427,18 @@ export function usePrepareSendRunesCallback() {
       runeAmount,
       outputValue,
       feeRate,
+      enableRBF,
     }: {
       toAddressInfo: ToAddressInfo
       runeid: string
       runeAmount: string
       outputValue?: number
       feeRate: number
+      enableRBF?: boolean
     }) => {
+      if (!accountCapabilities.canCreateSigningRequest) {
+        throw new Error(t('not_supported'))
+      }
       if (!feeRate) {
         const summary = await wallet.getFeeSummary()
         feeRate = summary.list[1]!.feeRate
@@ -415,11 +462,22 @@ export function usePrepareSendRunesCallback() {
         feeRate,
         btcUtxos,
         assetUtxos,
+        enableRBF,
       })
 
       return toSignData
     },
-    [dispatch, wallet, fromAddress, utxos, assetUtxosRunes, fetchAssetUtxosRunes, account]
+    [
+      dispatch,
+      wallet,
+      fromAddress,
+      utxos,
+      assetUtxosRunes,
+      fetchAssetUtxosRunes,
+      account,
+      accountCapabilities.canCreateSigningRequest,
+      t,
+    ]
   )
 }
 
@@ -431,23 +489,30 @@ export function useRunesTx() {
 export function usePrepareSendAlkanesCallback() {
   const wallet = useWallet()
   const account = useCurrentAccount()
+  const accountCapabilities = useCurrentAccountCapabilities()
+  const { t } = useI18n()
   const callback = useCallback(
     async (
       toAddressInfo: ToAddressInfo,
       alkaneid: string,
       amount: string,
       feeRate: number,
-      type: 'ft' | 'nft'
+      type: 'ft' | 'nft',
+      enableRBF?: boolean
     ) => {
+      if (!accountCapabilities.canCreateSigningRequest) {
+        throw new Error(t('not_supported'))
+      }
       return await wallet.createSendAlkanesPsbt({
         to: toAddressInfo.address,
         alkaneid,
         amount,
         feeRate,
         type,
+        enableRBF,
       })
     },
-    [wallet, account]
+    [wallet, account, accountCapabilities.canCreateSigningRequest, t]
   )
   return callback
 }

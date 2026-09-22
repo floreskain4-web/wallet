@@ -86,9 +86,6 @@
   "all_read": {
     "message": "すべて既読"
   },
-  "allow_sign_data_requests": {
-    "message": "signDataリクエストを許可する"
-  },
   "allow_this_site_to_switch_the_chain": {
     "message": "このサイトにチェーンの切り替えを許可しますか？"
   },
@@ -129,7 +126,7 @@
     "message": "ARC20バーンリスクリスト"
   },
   "are_not_supported": {
-    "message": "はサポートされていません。"
+    "message": "をサポートしていません。"
   },
   "are_not_supported_yet": {
     "message": "はまだサポートされていません。"
@@ -319,12 +316,6 @@
   },
   "cap": {
     "message": "上限"
-  },
-  "cat": {
-    "message": "CAT"
-  },
-  "cat20_warning_nomerge": {
-    "message": "マージするには少なくとも2つのUTXOが必要です"
   },
   "cbor_data_is_required_for_parsing_cosmos_signature": {
     "message": "Cosmos署名の解析にはCBORデータが必要です"
@@ -570,7 +561,7 @@
     "message": "ウォッチウォレットを作成"
   },
   "create_with_mnemonics_12words": {
-    "message": "ニーモニック (12単語) で作成"
+    "message": "ニーモニックで作成"
   },
   "current": {
     "message": "現在"
@@ -719,15 +710,6 @@
   "enable_atomicals_assets_warning": {
     "message": "Atomicalsアセットはウォレットに表示されなくなり、通常の残高として使用できるようになります。注意して進めてください。"
   },
-  "enable_sign_data_popover_warning": {
-    "message": "signDataリクエストを許可すると、フィッシング攻撃に対して脆弱になる可能性があります。常にURLを確認し、コードを含むメッセージに署名する際は注意してください。"
-  },
-  "enable_sign_data_popover_warning_2": {
-    "message": "この設定をオンにするように求められた場合、詐欺に遭っている可能性があります。"
-  },
-  "enable_sign_data_warning": {
-    "message": "この設定を有効にすると、読み取れない署名リクエストを受け取る可能性があります。理解できないメッセージに署名すると、資金やNFTを渡すことに同意してしまう可能性があります。フィッシング攻撃のリスクにさらされます。signDataをオフにして自身を保護してください。"
-  },
   "enable_unconfirmed_balance": {
     "message": "未確認残高を有効にする"
   },
@@ -822,7 +804,7 @@
     "message": "Atomicalsアセットについては、"
   },
   "for_ordinals_assets": {
-    "message": "Ordinalsアセットについては、"
+    "message": "UniSat Walletは現在"
   },
   "from": {
     "message": "送信元"
@@ -974,9 +956,6 @@
   "i_have_signed_scan_result": {
     "message": "署名完了、結果をスキャン"
   },
-  "i_only_sign_what_i_understand": {
-    "message": "理解したものにのみ署名します"
-  },
   "i_saved_my_secret_recovery_phrase": {
     "message": "シークレットリカバリーフレーズを保存しました"
   },
@@ -1124,6 +1103,9 @@
   "invalid_psbt": {
     "message": "無効なPSBT"
   },
+  "invalid_public_key": {
+    "message": "無効な公開鍵"
+  },
   "invalid_public_key_in_tosigninput": {
     "message": "toSignInput内の無効な公開鍵"
   },
@@ -1195,18 +1177,6 @@
   },
   "learn_more_about_keystone": {
     "message": "Keystoneについてさらに詳しく"
-  },
-  "legacy_address_warning": {
-    "message": "レガシーアドレスを使用することは、高いトランザクション手数料や意図しないCAT20バランスのロックアップを招く可能性があります。"
-  },
-  "legacy_address_warning_2": {
-    "message": "レガシーアドレスへのトランザクションは、意図しないCAT20バランスの支出を招く可能性があります。"
-  },
-  "legacy_address_warning_3": {
-    "message": "レガシーアドレスを使用することは、高いトランザクション手数料や意図しないCAT20バランスのロックアップを招く可能性があります。"
-  },
-  "legacy_address_warning_4": {
-    "message": "レガシーアドレスへのトランザクションは、意図しないCAT20バランスの支出を招く可能性があります。"
   },
   "legacy_p2pkh": {
     "message": "Legacy (P2PKH)"
@@ -1307,9 +1277,6 @@
   "merge_utxos_failed": {
     "message": "統合失敗"
   },
-  "merge_utxos_for_cat20_asset": {
-    "message": "CAT20アセットのUTXOをマージ"
-  },
   "merge_utxos_is_not_supported_for_keystone_yet": {
     "message": "UTXOのマージはまだKeystoneでサポートされていません"
   },
@@ -1369,6 +1336,9 @@
   },
   "mnemonics_12_words": {
     "message": "12 語"
+  },
+  "mnemonics_12_words_not_recommended": {
+    "message": "24個のリカバリーフレーズを使用することを推奨します。12個のリカバリーフレーズと比較して、24個のリカバリーフレーズはより高いランダム性を持ち、より強固なセキュリティを提供します。"
   },
   "mnemonics_24_words": {
     "message": "24 語"
@@ -1444,6 +1414,9 @@
   },
   "multiple_assets_risk_title": {
     "message": "複数の資産が検出されました"
+  },
+  "multiple_risks_detected_description": {
+    "message": "このトランザクションには複数のリスクがあります。続行する前に慎重に確認してください。"
   },
   "multiple_inscriptions_are_mixed_together_please_sp": {
     "message": "複数のインスクリプションが混在しています。最初に分割してください。"
@@ -1775,6 +1748,9 @@
   "psbt_data": {
     "message": "PSBTデータ:"
   },
+  "signed_psbt_data": {
+    "message": "署名済みPSBTデータ"
+  },
   "public_key_must_be_compressed_secp256k1_ie_33_byte": {
     "message": "公開鍵は圧縮されたsecp256k1（つまり、0x02または0x03で始まる33バイト）である必要があります"
   },
@@ -1788,7 +1764,7 @@
     "message": "範囲"
   },
   "rare_sats": {
-    "message": "レアsat"
+    "message": "Rare Sats"
   },
   "rate_us": {
     "message": "評価してください"
@@ -1797,7 +1773,7 @@
     "message": "RBF"
   },
   "rbf_tip": {
-    "message": "トランザクションの置換を許可する機能です。"
+    "message": "RBF はこの未承認トランザクションを置換可能としてマークし、より高い手数料で再試行できるようにします。RBF がオフになっていても、ネットワークポリシーによってはトランザクションが引き続き置換可能な場合があります。"
   },
   "receive": {
     "message": "受信"
@@ -1854,7 +1830,7 @@
     "message": "助記詞から復元"
   },
   "restore_from_mnemonics_12words24words": {
-    "message": "ニーモニック (12単語、24単語) から復元"
+    "message": "ニーモニックから復元"
   },
   "restore_from_single_private_key": {
     "message": "単一の秘密鍵から復元"
@@ -1997,9 +1973,6 @@
   "send": {
     "message": "送信"
   },
-  "send_CAT721": {
-    "message": "CAT721を送信"
-  },
   "send_alkanes": {
     "message": "アルカンズ送信"
   },
@@ -2014,15 +1987,6 @@
   },
   "send_atomicals_inscription": {
     "message": "Atomicalsインスクリプションを送信"
-  },
-  "send_cat20": {
-    "message": "CAT20を送信"
-  },
-  "send_cat20_is_not_supported_for_keystone_yet": {
-    "message": "CAT20の送信はまだKeystoneでサポートされていません"
-  },
-  "send_cat721": {
-    "message": "CAT721を送信"
   },
   "send_inscription": {
     "message": "インスクリプションをクリックして直接送信できます。"
@@ -2084,17 +2048,17 @@
   "derive_context_hash_app_name": {
     "message": "アプリケーション"
   },
+  "derive_context_hash_account": {
+    "message": "アカウント"
+  },
+  "derive_context_hash_network": {
+    "message": "ネットワーク"
+  },
   "derive_context_hash_context": {
     "message": "コンテキスト"
   },
   "derive_context_hash_warning": {
     "message": "このサイトを信頼できる場合のみ承認してください。"
-  },
-  "sign_data_request": {
-    "message": "データ署名リクエスト"
-  },
-  "sign_data_requests": {
-    "message": "signDataリクエスト"
   },
   "sign_multiple_transactions": {
     "message": "複数トランザクションに署名"
@@ -2116,9 +2080,6 @@
   },
   "signdata_is_required_for_cosmos_signing": {
     "message": "Cosmos署名にはsignDataが必要です"
-  },
-  "signdata_required_tip": {
-    "message": "続行するには、設定 -> 詳細設定でsignDataリクエスト機能を有効にする必要があります。"
   },
   "signed": {
     "message": "署名済み"
@@ -2504,9 +2465,6 @@
   "understand_and_accept_the_risks_associated_with_this_transaction": {
     "message": "このトランザクションに関連するリスクを理解し、受け入れます。"
   },
-  "understand_sign_data_warning": {
-    "message": "signDataリクエストを有効にすると、すべての資金とNFTを失う可能性があることを理解しています。"
-  },
   "unisat": {
     "message": "UNISAT"
   },
@@ -2556,10 +2514,25 @@
     "message": "ユーザーがリクエストを拒否しました。"
   },
   "utxo_indexing_risk_description": {
-    "message": "選択されたUTXOは、まだインデックス作成中のトランザクションに属しています。トランザクションのセキュリティと信頼性を確保するため、続行する前にインデックス作成が完了するまでお待ちください。"
+    "message": "このUTXOは現在もインデックス作成中であり、関連する資産はまだ完全には識別されていない可能性があります。インデックス作成が完了するまでお待ちいただくことを強くお勧めします。通常、約5分かかります。"
+  },
+  "utxo_indexing_in_progress": {
+    "message": "インデックス作成中"
+  },
+  "utxo_indexing_risk_asset_warning": {
+    "message": "今送信すると、資産を永久に失う可能性があります。"
+  },
+  "utxo_indexing_risk_agreement": {
+    "message": "これにより資産を永久に失う可能性があることを理解したうえで、このUTXOを送信します"
   },
   "utxo_indexing_risk_title": {
-    "message": "UTXOインデックス作成が進行中です"
+    "message": "自己責任で続行"
+  },
+  "understand_the_risks_continue": {
+    "message": "リスクを理解して続行"
+  },
+  "try_again_later": {
+    "message": "後でもう一度試す"
   },
   "utxo_not_found": {
     "message": "UTXOが見つかりません。"
@@ -2636,9 +2609,6 @@
   "you_are_signing": {
     "message": "署名する内容:"
   },
-  "you_are_signing_data": {
-    "message": "署名するデータ:"
-  },
   "you_can_unlock_these_assets_by_using_the_utxos_tools": {
     "message": "UTXOツールを使用してこれらのアセットをアンロックできます。"
   },
@@ -2665,5 +2635,56 @@
   },
   "your_balance_have_to_be_merged": {
     "message": "あなたの"
+  },
+  "connect_to_readonly_wallet": {
+    "message": "読み取り専用ウォレットに接続"
+  },
+  "copy_message_to_sign": {
+    "message": "署名するメッセージをコピー"
+  },
+  "create_readonly_wallet": {
+    "message": "読み取り専用ウォレットを作成"
+  },
+  "enter_your_signature": {
+    "message": "署名を入力してください"
+  },
+  "invalid_signature": {
+    "message": "無効な署名です"
+  },
+  "please_enter_your_signature": {
+    "message": "署名を入力してください"
+  },
+  "public_key": {
+    "message": "公開鍵"
+  },
+  "readonly_wallet": {
+    "message": "読み取り専用ウォレット"
+  },
+  "copy_signing_params": {
+    "message": "署名パラメータをコピー"
+  },
+  "readonly_signing": {
+    "message": "オフライン署名"
+  },
+  "readonly_signing_copy_step": {
+    "message": "署名リクエストをコピー"
+  },
+  "readonly_signing_copy_button": {
+    "message": "リクエストをコピー"
+  },
+  "readonly_signing_paste_step": {
+    "message": "署名済みPSBTを貼り付け"
+  },
+  "readonly_signing_paste_placeholder": {
+    "message": "署名済みPSBT Hex"
+  },
+  "readonly_signing_paste_signature_step": {
+    "message": "署名を貼り付け"
+  },
+  "readonly_signing_signature_placeholder": {
+    "message": "署名"
+  },
+  "load_more_items": {
+    "message": "さらに{count}件読み込む"
   }
 }

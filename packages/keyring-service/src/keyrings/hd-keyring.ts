@@ -106,18 +106,26 @@ export class HdKeyring extends SimpleKeyring {
     this.mnemonic = mnemonic
     this._index2wallet = {}
 
-    let seed
-    if (bip39.mnemonicToSeedSync) {
-      seed = bip39.mnemonicToSeedSync(mnemonic, this.passphrase)
-    } else {
-      seed = bip39.mnemonicToSeed(mnemonic, this.passphrase)
+    if (!bip39.mnemonicToSeedSync) {
+      throw new Error('Btc-Hd-Keyring: mnemonicToSeedSync is required')
     }
-    this.hdWallet = hdkey.fromMasterSeed(seed)
-    this.root = this.hdWallet.derive(this.hdPath)
+    const seed = bip39.mnemonicToSeedSync(mnemonic, this.passphrase)
+    try {
+      this.hdWallet = hdkey.fromMasterSeed(seed)
+      this.root = this.hdWallet.derive(this.hdPath)
+    } finally {
+      seed?.fill?.(0)
+    }
+  }
+
+  clearRecoveryData() {
+    this.mnemonic = ''
+    this.xpriv = ''
+    this.passphrase = ''
   }
 
   changeHdPath(hdPath: string) {
-    if (!this.mnemonic) {
+    if (!this.hdWallet) {
       throw new Error('Btc-Hd-Keyring: Not support')
     }
 
@@ -133,7 +141,7 @@ export class HdKeyring extends SimpleKeyring {
   }
 
   getAccountByHdPath(hdPath: string, index: number) {
-    if (!this.mnemonic) {
+    if (!this.hdWallet) {
       throw new Error('Btc-Hd-Keyring: Not support')
     }
     let derivePath: string
@@ -255,6 +263,24 @@ export class HdKeyring extends SimpleKeyring {
     })
   }
 
+  override clearSensitiveData() {
+    super.clearSensitiveData()
+
+    const wipeHdNode = (node: any) => {
+      node?.privateKey?.fill(0)
+      node?._privateKey?.fill(0)
+      node?.chainCode?.fill(0)
+    }
+
+    wipeHdNode(this.root)
+    wipeHdNode(this.hdWallet)
+    this._index2wallet = {}
+    this.activeIndexes = []
+    this.root = null
+    this.hdWallet = undefined
+    this.clearRecoveryData()
+  }
+
   getIndexByAddress(address: string) {
     for (const key in this._index2wallet) {
       if (this._index2wallet[key]?.[0] === address) {
@@ -268,19 +294,26 @@ export class HdKeyring extends SimpleKeyring {
    * Derive a deterministic context hash from the wallet's key material.
    * Uses BIP-32 derivation at m/73681862' from the HD wallet root.
    *
-   * @param _publicKey - Unused for HD keyrings (derivation is from root).
-   * @param appName - Application identifier.
-   * @param context - Hex-encoded context string.
+   * @param publicKey            - The connected pubkey (66-char compressed hex) to inject into HKDF info per spec v2.0.
+   * @param appName              - Application identifier.
+   * @param canonicalNetworkName - Canonical Bitcoin network name (e.g. "bitcoin-mainnet").
+   * @param context              - Hex-encoded context string.
    */
-  override async deriveContextHash(_publicKey: string, appName: string, context: string): Promise<string> {
+  override async deriveContextHash(
+    publicKey: string,
+    appName: string,
+    canonicalNetworkName: string,
+    context: string,
+  ): Promise<string> {
     const contextBytes = parseHexContext(context)
+    const pubkeyBytes = Uint8Array.from(Buffer.from(publicKey, 'hex'))
     if (!this.hdWallet) {
       throw new Error('deriveContextHash requires a mnemonic or xpriv-based keyring')
     }
     const child = this.hdWallet.derive(DERIVE_CONTEXT_HASH_PATH)
     const privKeyBytes = new Uint8Array(child.privateKey)
     try {
-      return deriveContextHash(privKeyBytes, appName, contextBytes)
+      return deriveContextHash(privKeyBytes, appName, canonicalNetworkName, pubkeyBytes, contextBytes)
     } finally {
       privKeyBytes.fill(0)
       // Zero the original BIP-32 node's key buffer as well

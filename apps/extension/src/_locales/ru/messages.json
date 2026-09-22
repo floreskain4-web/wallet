@@ -86,9 +86,6 @@
   "all_read": {
     "message": "Всё прочитано"
   },
-  "allow_sign_data_requests": {
-    "message": "Разрешить запросы signData"
-  },
   "allow_this_site_to_switch_the_chain": {
     "message": "Разрешить этому сайту переключить блокчейн?"
   },
@@ -129,7 +126,7 @@
     "message": "Список рисков сжигания ARC20"
   },
   "are_not_supported": {
-    "message": "не поддерживаются."
+    "message": "."
   },
   "are_not_supported_yet": {
     "message": "пока не поддерживаются."
@@ -319,12 +316,6 @@
   },
   "cap": {
     "message": "Предел"
-  },
-  "cat": {
-    "message": "CAT"
-  },
-  "cat20_warning_nomerge": {
-    "message": "Для объединения необходимо как минимум 2 UTXO"
   },
   "cbor_data_is_required_for_parsing_cosmos_signature": {
     "message": "Данные CBOR требуются для парсинга подписи Cosmos"
@@ -570,7 +561,7 @@
     "message": "Создать наблюдательный кошелёк"
   },
   "create_with_mnemonics_12words": {
-    "message": "Создать с помощью мнемоники (12 слов)"
+    "message": "Создать с помощью мнемоники"
   },
   "current": {
     "message": "Текущий"
@@ -719,15 +710,6 @@
   "enable_atomicals_assets_warning": {
     "message": "Активы atomicals больше не будут отображаться в кошельке, и их можно будет тратить как обычный баланс. Пожалуйста, действуйте с осторожностью."
   },
-  "enable_sign_data_popover_warning": {
-    "message": "Разрешение запросов signData может сделать вас уязвимым для фишинговых атак. Всегда проверяйте URL и будьте осторожны при подписании сообщений, содержащих код."
-  },
-  "enable_sign_data_popover_warning_2": {
-    "message": "Если вас попросили включить эту настройку, возможно, вас пытаются обмануть"
-  },
-  "enable_sign_data_warning": {
-    "message": "Если вы включите эту настройку, вы можете получать запросы подписи, которые не читаемы. Подписывая сообщение, которое вы не понимаете, вы можете согласиться на передачу ваших средств и NFT. Вы подвергаетесь риску фишинговых атак. Защитите себя, отключив signData."
-  },
   "enable_unconfirmed_balance": {
     "message": "Включить неподтверждённый баланс"
   },
@@ -822,7 +804,7 @@
     "message": "Для активов Atomicals,"
   },
   "for_ordinals_assets": {
-    "message": "Для активов Ordinals,"
+    "message": "UniSat Wallet в настоящее время не поддерживает "
   },
   "from": {
     "message": "От"
@@ -974,9 +956,6 @@
   "i_have_signed_scan_result": {
     "message": "Я Подписал, Отсканировать Результат"
   },
-  "i_only_sign_what_i_understand": {
-    "message": "Я подписываю только то, что понимаю"
-  },
   "i_saved_my_secret_recovery_phrase": {
     "message": "Я сохранил(а) свою секретную фразу восстановления"
   },
@@ -1124,6 +1103,9 @@
   "invalid_psbt": {
     "message": "неверный PSBT"
   },
+  "invalid_public_key": {
+    "message": "Неверный публичный ключ"
+  },
   "invalid_public_key_in_tosigninput": {
     "message": "неверный публичный ключ в toSignInput"
   },
@@ -1195,18 +1177,6 @@
   },
   "learn_more_about_keystone": {
     "message": "Узнать больше о Keystone"
-  },
-  "legacy_address_warning": {
-    "message": "Не рекомендуется использовать legacy адреса, так как это может привести к более высоким комиссиям за транзакции или непреднамеренной блокировке балансов CAT20."
-  },
-  "legacy_address_warning_2": {
-    "message": "Не рекомендуется отправлять транзакции на legacy адреса, так как это может привести к непреднамеренной трате балансов CAT20."
-  },
-  "legacy_address_warning_3": {
-    "message": "Не рекомендуется использовать legacy адреса, так как они могут привести к более высоким комиссиям за транзакции или непреднамеренной блокировке балансов CAT20."
-  },
-  "legacy_address_warning_4": {
-    "message": "Не рекомендуется отправлять транзакции на legacy адреса, так как это может привести к непреднамеренной трате балансов CAT20."
   },
   "legacy_p2pkh": {
     "message": "Legacy (P2PKH)"
@@ -1307,9 +1277,6 @@
   "merge_utxos_failed": {
     "message": "Слияние неудачно"
   },
-  "merge_utxos_for_cat20_asset": {
-    "message": "Объединить UTXO для актива CAT20"
-  },
   "merge_utxos_is_not_supported_for_keystone_yet": {
     "message": "Объединение UTXO пока не поддерживается для Keystone"
   },
@@ -1369,6 +1336,9 @@
   },
   "mnemonics_12_words": {
     "message": "12 слов"
+  },
+  "mnemonics_12_words_not_recommended": {
+    "message": "Рекомендуется использовать фразу восстановления из 24 слов. По сравнению с фразой восстановления из 12 слов, фраза из 24 слов обеспечивает более высокую случайность и более высокий уровень безопасности."
   },
   "mnemonics_24_words": {
     "message": "24 слова"
@@ -1444,6 +1414,9 @@
   },
   "multiple_assets_risk_title": {
     "message": "Обнаружено несколько активов"
+  },
+  "multiple_risks_detected_description": {
+    "message": "Эта транзакция связана с несколькими рисками. Внимательно проверьте ее, прежде чем продолжить."
   },
   "multiple_inscriptions_are_mixed_together_please_sp": {
     "message": "Несколько надписей смешаны вместе. Пожалуйста, сначала разделите их."
@@ -1775,6 +1748,9 @@
   "psbt_data": {
     "message": "Данные PSBT:"
   },
+  "signed_psbt_data": {
+    "message": "Данные подписанного PSBT"
+  },
   "public_key_must_be_compressed_secp256k1_ie_33_byte": {
     "message": "Публичный ключ должен быть сжатым secp256k1, т.е. 33 байта, начинающихся с 0x02 или 0x03"
   },
@@ -1788,7 +1764,7 @@
     "message": "Диапазон"
   },
   "rare_sats": {
-    "message": "Редкие сатоши"
+    "message": "Rare Sats"
   },
   "rate_us": {
     "message": "Оцените нас"
@@ -1797,7 +1773,7 @@
     "message": "RBF"
   },
   "rbf_tip": {
-    "message": "Функция, позволяющая заменить транзакцию."
+    "message": "RBF помечает эту неподтвержденную транзакцию как заменяемую, чтобы вы могли повторить её с более высокой комиссией. Даже если RBF отключен, транзакция всё равно может быть заменяемой в зависимости от политики сети."
   },
   "receive": {
     "message": "Получить"
@@ -1854,7 +1830,7 @@
     "message": "Восстановить из мнемоники"
   },
   "restore_from_mnemonics_12words24words": {
-    "message": "Восстановить из мнемоники (12 слов, 24 слова)"
+    "message": "Восстановить из мнемоники"
   },
   "restore_from_single_private_key": {
     "message": "Восстановить из одиночного приватного ключа"
@@ -1997,9 +1973,6 @@
   "send": {
     "message": "Отправить"
   },
-  "send_CAT721": {
-    "message": "Отправить CAT721"
-  },
   "send_alkanes": {
     "message": "Отправить Алканов"
   },
@@ -2014,15 +1987,6 @@
   },
   "send_atomicals_inscription": {
     "message": "Отправить надпись Atomicals"
-  },
-  "send_cat20": {
-    "message": "Отправить CAT20"
-  },
-  "send_cat20_is_not_supported_for_keystone_yet": {
-    "message": "Отправка CAT20 пока не поддерживается для Keystone"
-  },
-  "send_cat721": {
-    "message": "Отправить CAT721"
   },
   "send_inscription": {
     "message": "Вы можете нажать на надпись, чтобы отправить её напрямую."
@@ -2084,17 +2048,17 @@
   "derive_context_hash_app_name": {
     "message": "Приложение"
   },
+  "derive_context_hash_account": {
+    "message": "Аккаунт"
+  },
+  "derive_context_hash_network": {
+    "message": "Сеть"
+  },
   "derive_context_hash_context": {
     "message": "Контекст"
   },
   "derive_context_hash_warning": {
     "message": "Одобряйте только если вы доверяете этому сайту."
-  },
-  "sign_data_request": {
-    "message": "Запрос подписи данных"
-  },
-  "sign_data_requests": {
-    "message": "Запросы signData"
   },
   "sign_multiple_transactions": {
     "message": "Подписать несколько транзакций"
@@ -2116,9 +2080,6 @@
   },
   "signdata_is_required_for_cosmos_signing": {
     "message": "signData требуется для подписи Cosmos"
-  },
-  "signdata_required_tip": {
-    "message": "Вам необходимо включить функцию запроса подписи данных (signData) в Настройки -> Расширенные, чтобы продолжить."
   },
   "signed": {
     "message": "Подписано"
@@ -2504,9 +2465,6 @@
   "understand_and_accept_the_risks_associated_with_this_transaction": {
     "message": "Я понимаю и принимаю риски, связанные с этой транзакцией."
   },
-  "understand_sign_data_warning": {
-    "message": "Я понимаю, что могу потерять все свои средства и NFT, если включу запросы signData."
-  },
   "unisat": {
     "message": "UNISAT"
   },
@@ -2556,10 +2514,25 @@
     "message": "Пользователь отклонил запрос."
   },
   "utxo_indexing_risk_description": {
-    "message": "Выбранный UTXO принадлежит транзакции, которая все еще индексируется. Чтобы обеспечить безопасность и надежность транзакции, подождите завершения индексации перед продолжением."
+    "message": "Этот UTXO все еще индексируется, и связанные с ним активы, возможно, еще не были полностью определены. Мы настоятельно рекомендуем дождаться завершения индексации. Обычно это занимает около 5 минут."
+  },
+  "utxo_indexing_in_progress": {
+    "message": "Индексация выполняется"
+  },
+  "utxo_indexing_risk_asset_warning": {
+    "message": "Отправка сейчас может привести к безвозвратной потере активов."
+  },
+  "utxo_indexing_risk_agreement": {
+    "message": "Я понимаю, что это может привести к безвозвратной потере активов, и все равно хочу отправить этот UTXO"
   },
   "utxo_indexing_risk_title": {
-    "message": "Выполняется индексация UTXO"
+    "message": "Действуйте на свой страх и риск"
+  },
+  "understand_the_risks_continue": {
+    "message": "Понять риски и продолжить"
+  },
+  "try_again_later": {
+    "message": "Попробовать позже"
   },
   "utxo_not_found": {
     "message": "UTXO не найден."
@@ -2636,9 +2609,6 @@
   "you_are_signing": {
     "message": "Вы подписываете:"
   },
-  "you_are_signing_data": {
-    "message": "Вы подписываете данные:"
-  },
   "you_can_unlock_these_assets_by_using_the_utxos_tools": {
     "message": "Вы можете разблокировать эти активы с помощью инструментов UTXO."
   },
@@ -2665,5 +2635,56 @@
   },
   "your_balance_have_to_be_merged": {
     "message": "Ваш "
+  },
+  "connect_to_readonly_wallet": {
+    "message": "Подключить кошелек только для чтения"
+  },
+  "copy_message_to_sign": {
+    "message": "Скопировать сообщение для подписи"
+  },
+  "create_readonly_wallet": {
+    "message": "Создать кошелек только для чтения"
+  },
+  "enter_your_signature": {
+    "message": "Введите вашу подпись"
+  },
+  "invalid_signature": {
+    "message": "Недействительная подпись"
+  },
+  "please_enter_your_signature": {
+    "message": "Пожалуйста, введите вашу подпись"
+  },
+  "public_key": {
+    "message": "Публичный ключ"
+  },
+  "readonly_wallet": {
+    "message": "Кошелек только для чтения"
+  },
+  "copy_signing_params": {
+    "message": "Скопировать параметры подписи"
+  },
+  "readonly_signing": {
+    "message": "Офлайн-подпись"
+  },
+  "readonly_signing_copy_step": {
+    "message": "Скопируйте запрос на подпись"
+  },
+  "readonly_signing_copy_button": {
+    "message": "Скопировать запрос"
+  },
+  "readonly_signing_paste_step": {
+    "message": "Вставьте подписанный PSBT"
+  },
+  "readonly_signing_paste_placeholder": {
+    "message": "Hex подписанного PSBT"
+  },
+  "readonly_signing_paste_signature_step": {
+    "message": "Вставьте подпись"
+  },
+  "readonly_signing_signature_placeholder": {
+    "message": "Подпись"
+  },
+  "load_more_items": {
+    "message": "Загрузить еще {count}"
   }
 }

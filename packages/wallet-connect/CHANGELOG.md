@@ -1,5 +1,11 @@
 # @unisat/wallet-connect
 
+## 0.2.1
+
+### Patch Changes
+
+- Allow wallet listener callbacks to receive provider event arguments.
+
 ## 0.2.0
 
 ### Minor Changes

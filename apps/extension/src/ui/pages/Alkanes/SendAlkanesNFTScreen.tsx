@@ -1,6 +1,7 @@
 import { Button, Column, Content, Header, Input, Layout, Row, Text } from '@/ui/components';
 import AlkanesNFTPreview from '@/ui/components/AlkanesNFTPreview';
 import { FeeRateBar } from '@/ui/components/FeeRateBar';
+import { RBFBar } from '@/ui/components/RBFBar';
 import { SendAlkanesNFTScreenStep, useSendAlkanesNFTScreenLogic } from '@unisat/wallet-state';
 
 import { SignPsbt } from '../Approval/components';
@@ -11,9 +12,11 @@ export default function SendAlkanesNFTScreen() {
     t,
     alkanesInfo,
     toInfo,
+    enableRBF,
     disabled,
     error,
     setToInfo,
+    setEnableRBF,
     onCreateTxHandleConfirm,
     onCreateTxHandleBack,
 
@@ -38,29 +41,34 @@ export default function SendAlkanesNFTScreen() {
     <Layout>
       <Header onBack={onCreateTxHandleBack} title={t('send_alkanes')} />
       <Content>
-        <Row justifyCenter>
-          <AlkanesNFTPreview alkanesInfo={alkanesInfo} preset="medium" />
-        </Row>
+        <Column>
+          <Row justifyCenter>
+            <AlkanesNFTPreview alkanesInfo={alkanesInfo} preset="medium" />
+          </Row>
 
-        <Column mt="lg">
-          <Input
-            preset="address"
-            addressInputData={toInfo}
-            onAddressInputChange={(val) => {
-              setToInfo(val);
-            }}
-            recipientLabel={<Text text={t('recipient')} preset="regular" color="textDim" />}
-            autoFocus={true}
-          />
+          <Column mt="lg">
+            <Input
+              preset="address"
+              addressInputData={toInfo}
+              onAddressInputChange={(val) => {
+                setToInfo(val);
+              }}
+              recipientLabel={<Text text={t('recipient')} preset="regular" color="textDim" />}
+              autoFocus={true}
+            />
+          </Column>
+
+          <Column mt="lg">
+            <FeeRateBar />
+          </Column>
+          <Column mt="lg">
+            <RBFBar value={enableRBF} onChange={setEnableRBF} />
+          </Column>
+
+          {error && <Text text={error} color="error" />}
+
+          <Button disabled={disabled} preset="primary" text={t('next')} onClick={onCreateTxHandleConfirm} />
         </Column>
-
-        <Column mt="lg">
-          <FeeRateBar />
-        </Column>
-
-        {error && <Text text={error} color="error" />}
-
-        <Button disabled={disabled} preset="primary" text={t('next')} onClick={onCreateTxHandleConfirm} />
       </Content>
     </Layout>
   );

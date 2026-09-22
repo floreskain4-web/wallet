@@ -10,7 +10,7 @@ import {
   Text
 } from '@/ui/components';
 import WebsiteBar from '@/ui/components/WebsiteBar';
-import { useApproval, useI18n } from '@unisat/wallet-state';
+import { useApproval, useChain, useCurrentAccount, useI18n } from '@unisat/wallet-state';
 
 interface Props {
   params: {
@@ -29,6 +29,8 @@ interface Props {
 export default function DeriveContextHash({ params: { data, session } }: Props) {
   const { resolveApproval, rejectApproval } = useApproval();
   const { t } = useI18n();
+  const account = useCurrentAccount();
+  const chain = useChain();
 
   const handleCancel = () => {
     rejectApproval();
@@ -54,6 +56,27 @@ export default function DeriveContextHash({ params: { data, session } }: Props) 
           <Card>
             <Text text={data.appName} style={{ fontFamily: 'monospace', wordBreak: 'break-all' }} />
           </Card>
+
+          {account?.address && (
+            <>
+              <Text text={t('derive_context_hash_account')} preset="bold" mt="lg" />
+              <Card>
+                <Text
+                  text={account.address}
+                  style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}
+                />
+              </Card>
+            </>
+          )}
+
+          {chain?.label && (
+            <>
+              <Text text={t('derive_context_hash_network')} preset="bold" mt="lg" />
+              <Card>
+                <Text text={chain.label} />
+              </Card>
+            </>
+          )}
 
           <Text text={t('derive_context_hash_context')} preset="bold" mt="lg" />
           <Card>

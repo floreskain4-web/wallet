@@ -142,13 +142,15 @@ export class BitcoinService {
     address: string,
     pubkey: string,
     tos: { address: string; satoshis: number }[],
-    feeRate: number
+    feeRate: number,
+    enableRBF = true
   ) {
     return this.httpClient.post('/v5/tx/create-send-btc', {
       fromAddress: address,
       fromPubkey: pubkey,
       tos,
       feeRate,
+      enableRBF,
       bypassHeadOffsets: true,
     })
   }

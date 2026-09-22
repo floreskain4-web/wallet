@@ -1,5 +1,23 @@
 # @unisat/base-utils
 
+## 0.5.0
+
+### Minor Changes
+
+- Improve safety
+
+## 0.4.0
+
+### Minor Changes
+
+- update number display
+
+## 0.3.0
+
+### Minor Changes
+
+- Add bnUtils.toDisplayAmount and bnUtils.toDisplayUSD functions
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { HashRouter, Route, Routes, useNavigate as useNavigateOrigin } from 'react-router-dom';
 
-import CAT20TokenScreen from '@/ui/pages/CAT20/CAT20TokenScreen';
-import MergeCAT20HistoryScreen from '@/ui/pages/CAT20/MergeCAT20HistoryScreen';
-import MergeCAT20Screen from '@/ui/pages/CAT20/MergeCAT20Screen';
-import SendCAT20Screen from '@/ui/pages/CAT20/SendCAT20Screen';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
   accountActions,
@@ -26,6 +22,7 @@ import CreateColdWalletScreen from './Account/CreateColdWalletScreen';
 import CreateHDWalletScreen from './Account/CreateHDWalletScreen';
 import CreateKeystoneWalletScreen from './Account/CreateKeystoneWalletScreen';
 import CreatePasswordScreen from './Account/CreatePasswordScreen';
+import CreateReadonlyWalletScreen from './Account/CreateReadonlyWalletScreen';
 import CreateSimpleWalletScreen from './Account/CreateSimpleWalletScreen';
 import CreateWatchWalletScreen from './Account/CreateWatchWalletScreen';
 import SwitchAccountScreen from './Account/SwitchAccountScreen';
@@ -45,9 +42,6 @@ import BRC20TokenScreen from './BRC20/BRC20TokenScreen';
 import BabylonStakingScreen from './Babylon/BabylonStakingScreen';
 import BabylonTxConfirmScreen from './Babylon/BabylonTxConfirmScreen';
 import SendBabyScreen from './Babylon/SendBabyScreen';
-import CAT721CollectionScreen from './CAT721/CAT721CollectionScreen';
-import CAT721NFTScreen from './CAT721/CAT721NFTScreen';
-import SendCAT721Screen from './CAT721/SendCAT721Screen';
 import AppTabScrren from './Main/AppTabScreen';
 import BoostScreen from './Main/BoostScreen';
 import DiscoverTabScreen from './Main/DiscoverTabScreen';
@@ -84,6 +78,8 @@ import TxCreateScreen from './Wallet/TxCreateScreen';
 import TxFailScreen from './Wallet/TxFailScreen';
 import TxSuccessScreen from './Wallet/TxSuccessScreen';
 import './index.module.less';
+
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const routes = {
   BoostScreen: {
@@ -234,6 +230,10 @@ export const routes = {
     path: '/account/create-cold-wallet',
     element: <CreateColdWalletScreen />
   },
+  CreateReadonlyWalletScreen: {
+    path: '/account/create-readonly-wallet',
+    element: <CreateReadonlyWalletScreen />
+  },
 
   UpgradeNoticeScreen: {
     path: '/settings/upgrade-notice',
@@ -283,38 +283,6 @@ export const routes = {
   RunesTokenScreen: {
     path: '/runes/token',
     element: <RunesTokenScreen />
-  },
-
-  CAT20TokenScreen: {
-    path: '/cat20/token',
-    element: <CAT20TokenScreen />
-  },
-  SendCAT20Screen: {
-    path: '/cat20/send-cat20',
-    element: <SendCAT20Screen />
-  },
-  MergeCAT20Screen: {
-    path: '/cat20/merge-cat20',
-    element: <MergeCAT20Screen />
-  },
-  MergeCAT20HistoryScreen: {
-    path: '/cat20/merge-history',
-    element: <MergeCAT20HistoryScreen />
-  },
-
-  CAT721CollectionScreen: {
-    path: '/cat721/collection',
-    element: <CAT721CollectionScreen />
-  },
-
-  CAT721NFTScreen: {
-    path: '/cat721/nft',
-    element: <CAT721NFTScreen />
-  },
-
-  SendCAT721Screen: {
-    path: '/cat721/send-cat721',
-    element: <SendCAT721Screen />
   },
 
   BabylonStakingScreen: {
@@ -368,7 +336,7 @@ export const routes = {
   }
 };
 
-if (process.env.NODE_ENV === 'development') {
+if (isDevelopment) {
   routes['TestScreen'] = {
     path: '/test',
     element: <TestScreen />
@@ -544,7 +512,8 @@ const Main = () => {
           height: '00vh',
           overflowY: 'auto',
           overflowX: 'hidden'
-        }}>
+        }}
+      >
         <Content justifyCenter itemsCenter>
           <Icon>
             <LoadingOutlined />

@@ -1,6 +1,8 @@
 import { ADDRESS_TYPES } from '@unisat/wallet-shared'
-import { useEffect, useState } from 'react'
+import { BUS_METHODS } from '@unisat/wallet-shared'
+import { useCallback, useEffect, useState } from 'react'
 import { useI18n, useNavigation, useTools, useWallet } from 'src/context'
+import { uiEventBus } from 'src/utils/eventBus'
 type Status = '' | 'error' | 'warning' | undefined
 
 export function useExportMnemonicsScreenLogic() {
@@ -46,6 +48,27 @@ export function useExportMnemonicsScreenLogic() {
     }
   }, [password])
 
+  const clearSensitiveState = useCallback(() => {
+    setPassword('')
+    setMnemonic('')
+    setPassphrase('')
+    setStatus('')
+    setError('')
+    setDisabled(true)
+  }, [])
+
+  useEffect(() => {
+    const handleLocked = () => {
+      clearSensitiveState()
+      nav.navigate('UnlockScreen', { autoUnlockByFace: false })
+    }
+
+    uiEventBus.addEventListener(BUS_METHODS.LOCKED, handleLocked)
+    return () => {
+      uiEventBus.removeEventListener(BUS_METHODS.LOCKED, handleLocked)
+    }
+  }, [clearSensitiveState, nav])
+
   function copy(str: string) {
     tools.copyToClipboard(str)
   }
@@ -54,6 +77,7 @@ export function useExportMnemonicsScreenLogic() {
   const pathName = ADDRESS_TYPES.find(v => v.hdPath === keyring.hdPath)?.name || 'custom'
 
   const onClickBack = () => {
+    clearSensitiveState()
     nav.goBack()
   }
 
@@ -61,6 +85,7 @@ export function useExportMnemonicsScreenLogic() {
     words,
     pathName,
     t,
+    password,
     setPassword,
     disabled,
     btnClick,

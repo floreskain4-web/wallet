@@ -1,5 +1,42 @@
 # @unisat/keyring-service
 
+## 1.5.0
+
+### Minor Changes
+
+- revert keystone chagned
+
+## 1.4.0
+
+### Minor Changes
+
+- fix keystone
+
+## 1.3.0
+
+### Minor Changes
+
+- Improve safety
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/wallet-bitcoin@1.2.0
+  - @unisat/wallet-shared@0.6.0
+  - @unisat/wallet-storage@0.2.3
+
+## 1.2.0
+
+### Minor Changes
+
+- release: minor wave for accumulated wallet toolkit updates since the previous package release.
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/wallet-shared@0.3.0
+  - @unisat/wallet-storage@0.2.2
+
 ## 1.1.0
 
 ### Minor Changes

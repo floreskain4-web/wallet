@@ -1,5 +1,17 @@
 # @unisat/babylon-service
 
+## 1.3.0
+
+### Minor Changes
+
+- Improve safety
+
+## 1.2.0
+
+### Minor Changes
+
+- publish by extension/v1.7.17
+
 ## 1.1.0
 
 ### Minor Changes

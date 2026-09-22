@@ -1,0 +1,55 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('../src/services', () => ({
+  keyringService: {
+    memStore: {
+      getState: vi.fn(),
+    },
+  },
+  permissionService: {
+    hasPermission: vi.fn(),
+  },
+}))
+
+vi.mock('../src/controllers/wallet', () => ({
+  default: {
+    getCurrentAccount: vi.fn(),
+    getLegacyNetworkName: vi.fn(),
+  },
+}))
+
+import internalMethod from '../src/controllers/provider/internalMethod'
+import { keyringService, permissionService } from '../src/services'
+import wallet from '../src/controllers/wallet'
+
+describe('provider internal methods', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(keyringService.memStore.getState).mockReturnValue({ isUnlocked: true } as any)
+    vi.mocked(wallet.getLegacyNetworkName).mockReturnValue('livenet')
+  })
+
+  it('does not disclose accounts to an unconnected origin', async () => {
+    vi.mocked(permissionService.hasPermission).mockReturnValue(false)
+    vi.mocked(wallet.getCurrentAccount).mockResolvedValue({ address: 'bc1qunconnected' } as any)
+
+    const state = await internalMethod.getProviderState({
+      session: { origin: 'https://unconnected.example' },
+    })
+
+    expect(state).toEqual({ network: 'livenet', isUnlocked: true, accounts: [] })
+    expect(wallet.getCurrentAccount).not.toHaveBeenCalled()
+  })
+
+  it('returns the current account to a connected origin', async () => {
+    vi.mocked(permissionService.hasPermission).mockReturnValue(true)
+    vi.mocked(wallet.getCurrentAccount).mockResolvedValue({ address: 'bc1qconnected' } as any)
+
+    const state = await internalMethod.getProviderState({
+      session: { origin: 'https://connected.example' },
+    })
+
+    expect(permissionService.hasPermission).toHaveBeenCalledWith('https://connected.example')
+    expect(state).toEqual({ network: 'livenet', isUnlocked: true, accounts: ['bc1qconnected'] })
+  })
+})

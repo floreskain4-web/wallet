@@ -8,7 +8,12 @@ function hasInscription(utxos: UnspentOutput[]) {
 }
 
 function hasAnyAssets(utxos: UnspentOutput[]) {
-  return utxos.some(v => v.inscriptions.length > 0 || (v.runes && v.runes.length > 0))
+  return utxos.some(
+    v =>
+      v.inscriptions.length > 0 ||
+      (v.runes && v.runes.length > 0) ||
+      (v.alkanes && v.alkanes.length > 0)
+  )
 }
 
 /**
@@ -53,6 +58,44 @@ function getAddedVirtualSize(addressType: AddressType) {
   throw new WalletError(ErrorCodes.UNKNOWN)
 }
 
+function getOutputVirtualSize(addressType: AddressType) {
+  if (addressType === AddressType.P2WPKH || addressType === AddressType.M44_P2WPKH) {
+    return 31
+  } else if (addressType === AddressType.P2TR || addressType === AddressType.M44_P2TR) {
+    return 43
+  } else if (addressType === AddressType.P2PKH) {
+    return 34
+  } else if (addressType === AddressType.P2SH_P2WPKH) {
+    return 32
+  }
+  throw new WalletError(ErrorCodes.UNKNOWN)
+}
+
+function getScriptOutputVirtualSize(script: Buffer) {
+  return 8 + getVarIntSize(script.length) + script.length
+}
+
+function getVarIntSize(value: number) {
+  if (value < 0xfd) {
+    return 1
+  } else if (value <= 0xffff) {
+    return 3
+  } else if (value <= 0xffffffff) {
+    return 5
+  }
+  return 9
+}
+
+function hasWitness(addressType: AddressType) {
+  return (
+    addressType === AddressType.P2WPKH ||
+    addressType === AddressType.M44_P2WPKH ||
+    addressType === AddressType.P2TR ||
+    addressType === AddressType.M44_P2TR ||
+    addressType === AddressType.P2SH_P2WPKH
+  )
+}
+
 export function getUtxoDust(addressType: AddressType) {
   if (addressType === AddressType.P2WPKH || addressType === AddressType.M44_P2WPKH) {
     return 294
@@ -77,6 +120,10 @@ export const utxoHelper = {
   hasAnyAssets,
   selectBtcUtxos,
   getAddedVirtualSize,
+  getOutputVirtualSize,
+  getScriptOutputVirtualSize,
+  getVarIntSize,
+  hasWitness,
   getUtxoDust,
   getAddressUtxoDust,
 }

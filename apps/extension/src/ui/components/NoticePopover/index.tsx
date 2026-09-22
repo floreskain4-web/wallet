@@ -47,7 +47,8 @@ export const NoticePopover = ({ onClose }: { onClose: () => void }) => {
               }}>
               <div style={{ fontSize: fontSizes.sm }}>
                 {t('for_ordinals_assets')}
-                <span style={{ color: '#EBB94C' }}>{t('rare_sats')}</span> {t('are_not_supported')}
+                <span style={{ color: '#EBB94C' }}>{t('rare_sats')}</span>
+                {t('are_not_supported')}
               </div>
             </Checkbox>
           </div>

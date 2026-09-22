@@ -1,6 +1,6 @@
 {
   "name": "@unisat/wallet-background",
-  "version": "2.0.0",
+  "version": "7.0.0",
   "description": "Complete wallet background logic for UniSat wallet, cross-platform compatible",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
@@ -28,7 +28,8 @@
     "build:esm": "tsup --format esm",
     "build:typed": "tsc --declaration --declarationMap --emitDeclarationOnly --outDir lib",
     "test": "vitest run",
-    "lint": "eslint src"
+    "lint": "eslint src --ext .ts,.js",
+    "prepublishOnly": "pnpm test && pnpm build"
   },
   "peerDependencies": {
     "@unisat/babylon-service": "workspace:*",

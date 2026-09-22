@@ -5,9 +5,6 @@ import { BabylonConfigV2 } from '@unisat/babylon-service/types'
 import {
   Account,
   AddressAlkanesTokenSummary,
-  AddressCAT20TokenSummary,
-  AddressCAT20UtxoSummary,
-  AddressCAT721CollectionSummary,
   AddressFlagType,
   AddressRunesTokenSummary,
   AddressSummary,
@@ -17,15 +14,13 @@ import {
   AlkanesInfo,
   Announcement,
   AppInfo,
+  AppExtra,
   AppSummary,
   BRC20HistoryItem,
   BabylonAddressSummary,
   BitcoinBalance,
   BitcoinBalanceV2,
   BtcChannelItem,
-  CAT20Balance,
-  CAT20MergeOrder,
-  CAT721Balance,
   CoinPrice,
   ConnectedSite,
   CosmosBalance,
@@ -148,13 +143,20 @@ export interface WalletController {
   createKeyringWithPrivateKey(
     data: string,
     addressType: AddressType,
-    alianName?: string
+    alianName?: string,
+    compressed?: boolean
   ): Promise<Account[]>
-  getPreMnemonics(): Promise<any>
-  generatePreMnemonic(): Promise<string>
+  generatePreMnemonic(strength?: 128 | 256): Promise<string>
   removePreMnemonics(): void
   createKeyringWithMnemonics(
     mnemonic: string,
+    hdPath: string,
+    passphrase: string,
+    addressType: AddressType,
+    accountCount: number,
+    accountIndexDerivation?: boolean
+  ): Promise<{ address: string; type: string }[]>
+  createKeyringWithPreMnemonic(
     hdPath: string,
     passphrase: string,
     addressType: AddressType,
@@ -172,7 +174,8 @@ export interface WalletController {
   ): Promise<{ address: string; type: string }[]>
   createTmpKeyringWithPrivateKey(
     privateKey: string,
-    addressType: AddressType
+    addressType: AddressType,
+    compressed?: boolean
   ): Promise<WalletKeyring>
   createTmpKeyringWithKeystone(
     urType: string,
@@ -199,6 +202,13 @@ export interface WalletController {
 
   createTmpKeyringWithMnemonics(
     mnemonic: string,
+    hdPath: string,
+    passphrase: string,
+    addressType: AddressType,
+    accountCount?: number,
+    accountIndexDerivation?: boolean
+  ): Promise<WalletKeyring>
+  createTmpKeyringWithPreMnemonic(
     hdPath: string,
     passphrase: string,
     addressType: AddressType,
@@ -243,6 +253,7 @@ export interface WalletController {
     amount: number
     btcUtxos: UnspentOutput[]
     feeRate: number
+    enableRBF?: boolean
     memo?: string
     memos?: string[]
   }): Promise<ToSignData>
@@ -251,6 +262,7 @@ export interface WalletController {
     to: string
     btcUtxos: UnspentOutput[]
     feeRate: number
+    enableRBF?: boolean
   }): Promise<ToSignData>
 
   createSendInscriptionPsbt(data: {
@@ -259,6 +271,7 @@ export interface WalletController {
     feeRate: number
     outputValue?: number
     btcUtxos: UnspentOutput[]
+    enableRBF?: boolean
   }): Promise<ToSignData>
 
   createSendMultipleInscriptionsPsbt(data: {
@@ -266,6 +279,7 @@ export interface WalletController {
     inscriptionIds: string[]
     feeRate: number
     btcUtxos: UnspentOutput[]
+    enableRBF?: boolean
   }): Promise<ToSignData>
 
   createSplitInscriptionPsbt(data: {
@@ -273,6 +287,7 @@ export interface WalletController {
     feeRate: number
     outputValue: number
     btcUtxos: UnspentOutput[]
+    enableRBF?: boolean
   }): Promise<ToSignData>
 
   pushTx(rawtx: string): Promise<string>
@@ -310,7 +325,6 @@ export interface WalletController {
   getCoinPrice(): Promise<CoinPrice>
   getBrc20sPrice(ticks: string[]): Promise<{ [tick: string]: TickPriceItem }>
   getRunesPrice(ticks: string[]): Promise<{ [tick: string]: TickPriceItem }>
-  getCAT20sPrice(tokenIds: string[]): Promise<{ [tokenId: string]: TickPriceItem }>
   getAlkanesPrice(alkaneid: string[]): Promise<{ [tick: string]: TickPriceItem }>
 
   setEditingKeyring(keyringIndex: number): Promise<void>
@@ -447,9 +461,6 @@ export interface WalletController {
     signature: string
   }>
 
-  getEnableSignData(): Promise<boolean>
-  setEnableSignData(enable: boolean): Promise<void>
-
   getRunesList(
     address: string,
     currentPage: number,
@@ -468,6 +479,7 @@ export interface WalletController {
     btcUtxos?: UnspentOutput[]
     assetUtxos?: UnspentOutput[]
     outputValue?: number
+    enableRBF?: boolean
   }): Promise<ToSignData>
 
   setAutoLockTimeId(timeId: number): Promise<void>
@@ -476,89 +488,10 @@ export interface WalletController {
   getDeveloperMode(): Promise<boolean>
   setDeveloperMode(developerMode: boolean): Promise<void>
 
-  getCAT20List(
-    version: 'v1' | 'v2',
-    address: string,
-    currentPage: number,
-    pageSize: number
-  ): Promise<{ currentPage: number; pageSize: number; total: number; list: CAT20Balance[] }>
-
-  getAddressCAT20TokenSummary(
-    version: 'v1' | 'v2',
-    address: string,
-    tokenId: string
-  ): Promise<AddressCAT20TokenSummary>
-
-  getAddressCAT20UtxoSummary(
-    version: 'v1' | 'v2',
-    address: string,
-    tokenId: string
-  ): Promise<AddressCAT20UtxoSummary>
-
-  transferCAT20Step1(
-    version: 'v1' | 'v2',
-    to: string,
-    tokenId: string,
-    tokenAmount: string,
-    feeRate: number
-  ): Promise<{ id: string; feeRate: number; toSignData: ToSignData }>
-  transferCAT20Step2(
-    version: 'v1' | 'v2',
-    transferId: string,
-    psbtHex: string
-  ): Promise<{ toSignData: ToSignData }>
-  transferCAT20Step3(
-    version: 'v1' | 'v2',
-    transferId: string,
-    psbtHex: string
-  ): Promise<{ txid: string }>
-
-  mergeCAT20Prepare(
-    version: 'v1' | 'v2',
-    tokenId: string,
-    utxoCount: number,
-    feeRate: number
-  ): Promise<CAT20MergeOrder>
-  transferCAT20Step1ByMerge(
-    version: 'v1' | 'v2',
-    mergeId: string
-  ): Promise<{ id: string; feeRate: number; toSignData: ToSignData }>
-  getMergeCAT20Status(version: 'v1' | 'v2', mergeId: string): Promise<any>
-
   getAppList(): Promise<{ tab: string; items: AppInfo[] }[]>
+  getAppExtra(id: string | number, locale?: string): Promise<AppExtra>
   getBannerList(): Promise<{ id: string; img: string; link: string }[]>
   getBlockActiveInfo(): Promise<{ allTransactions: number; allAddrs: number }>
-
-  getCAT721List(
-    version: 'v1' | 'v2',
-    address: string,
-    currentPage: number,
-    pageSize: number
-  ): Promise<{ currentPage: number; pageSize: number; total: number; list: CAT721Balance[] }>
-
-  getAddressCAT721CollectionSummary(
-    version: 'v1' | 'v2',
-    address: string,
-    collectionId: string
-  ): Promise<AddressCAT721CollectionSummary>
-
-  transferCAT721Step1(
-    version: 'v1' | 'v2',
-    to: string,
-    collectionId: string,
-    localId: string,
-    feeRate: number
-  ): Promise<{ id: string; feeRate: number; toSignData: ToSignData }>
-  transferCAT721Step2(
-    version: 'v1' | 'v2',
-    transferId: string,
-    psbtHex: string
-  ): Promise<{ toSignData: ToSignData }>
-  transferCAT721Step3(
-    version: 'v1' | 'v2',
-    transferId: string,
-    psbtHex: string
-  ): Promise<{ txid: string }>
 
   getBuyCoinChannelList(coin: string): Promise<BtcChannelItem[]>
   createBuyCoinPaymentUrl(coin: string, address: string, channel: string): Promise<string>
@@ -634,7 +567,8 @@ export interface WalletController {
 
   createSendBTCOffsetPsbt(
     tos: { address: string; satoshis: number }[],
-    feeRate: number
+    feeRate: number,
+    enableRBF?: boolean
   ): Promise<ToSignData>
 
   getAlkanesList(
@@ -657,6 +591,7 @@ export interface WalletController {
     amount: string
     feeRate: number
     type: 'ft' | 'nft'
+    enableRBF?: boolean
   }): Promise<ToSignData>
 
   getAlkanesCollectionList(
@@ -700,6 +635,8 @@ export interface WalletController {
 
   getAcceptLowFeeMode(): Promise<boolean>
   setAcceptLowFeeMode(accept: boolean): Promise<void>
+  getEnableRBF(): Promise<boolean>
+  setEnableRBF(enableRBF: boolean): Promise<void>
 
   createTmpKeyringWithPublicKey(publicKey: string, addressType: AddressType): Promise<WalletKeyring>
 

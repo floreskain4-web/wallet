@@ -5,6 +5,7 @@ import { BaseView } from '../BaseView';
 import { Column } from '../Column';
 import { Grid } from '../Grid';
 import { Icon, IconTypes } from '../Icon';
+import { UnreadDot } from '../UnreadDot';
 
 export function NavTabBar({ tab }: { tab: TabOption }) {
   return (
@@ -47,32 +48,8 @@ function TabButton({
       data-testid={dataTestId}>
       <Icon size={20} icon={icon} color={isActive ? 'white' : 'white_muted'} />
       <BaseView style={{ position: 'relative' }}>
-        {tabName === 'discover' && hasNewBanner && (
-          <BaseView
-            style={{
-              position: 'absolute',
-              top: -28,
-              right: -10,
-              width: 7,
-              height: 7,
-              backgroundColor: 'red',
-              borderRadius: '50%'
-            }}></BaseView>
-        )}
-        {tabName === 'settings' && unreadNotificationCount > 0 && (
-          <BaseView
-            style={{
-              position: 'absolute',
-              top: -28,
-              right: -10,
-              width: 7,
-              height: 7,
-              backgroundColor: '#F55454',
-              borderRadius: '50%',
-              borderWidth: 1,
-              borderColor: 'white'
-            }}></BaseView>
-        )}
+        {tabName === 'discover' && hasNewBanner && <UnreadDot top={-28} right={-10} />}
+        {tabName === 'settings' && unreadNotificationCount > 0 && <UnreadDot top={-28} right={-10} />}
       </BaseView>
     </Column>
   );

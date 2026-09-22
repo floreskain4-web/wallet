@@ -1,13 +1,9 @@
-import { colors } from '@/ui/theme/colors';
 import { useI18n } from '@unisat/wallet-state';
 
 import { DecodedPsbt } from '@unisat/wallet-shared';
-import { Column } from '../Column';
-import { Icon } from '../Icon';
 import InscriptionPreview from '../InscriptionPreview';
-import { Popover } from '../Popover';
 import { Row } from '../Row';
-import { Text } from '../Text';
+import { RiskDetailPopover, riskAssetCardStyle } from './RiskDetailPopover';
 
 export const InscriptionBurning = ({ decodedPsbt, onClose }: { decodedPsbt: DecodedPsbt; onClose: () => void }) => {
   const inputInscriptionMap = {};
@@ -33,42 +29,25 @@ export const InscriptionBurning = ({ decodedPsbt, onClose }: { decodedPsbt: Deco
   });
 
   return (
-    <Popover>
-      <Column justifyCenter itemsCenter>
-        <Row fullX justifyBetween>
-          <Row />
-          <Text text={t('inscription_burn_risk_list')} preset="bold" />
-          <Icon
-            icon="close"
-            onClick={() => {
-              onClose();
-            }}
-          />
-        </Row>
-        <Row fullX style={{ borderBottomWidth: 1, borderColor: colors.border }} />
-        <Row
-          justifyBetween
-          fullX
-          px="md"
-          py="xl"
-          style={{
-            backgroundColor: '#1e1a1e',
-            borderRadius: 10,
-            borderWidth: 1,
-            borderColor: '#442326'
-          }}
-          overflowX>
-          {burnList.map((burn, index) => {
-            return (
-              <InscriptionPreview
-                key={'inscription_burn_' + index}
-                data={decodedPsbt.inscriptions[burn]}
-                preset="small"
-              />
-            );
-          })}
-        </Row>
-      </Column>
-    </Popover>
+    <RiskDetailPopover title={t('inscription_burn_risk_list')} onClose={onClose}>
+      <Row
+        justifyBetween
+        fullX
+        px="md"
+        py="xl"
+        style={riskAssetCardStyle}
+        overflowX>
+        {burnList.map((burn, index) => {
+          return (
+            <InscriptionPreview
+              key={'inscription_burn_' + index}
+              data={decodedPsbt.inscriptions[burn]}
+              preset="small"
+              infoBgColor="#292929"
+            />
+          );
+        })}
+      </Row>
+    </RiskDetailPopover>
   );
 };

@@ -25,6 +25,27 @@ describe('sendInscriptions', () => {
 
     const toWallet = LocalWallet.fromRandom(addressType, NetworkType.MAINNET)
     describe('basic ' + addressType, function () {
+      it.each([
+        ['runes', { runes: [{ runeid: '1000:10', amount: '100' }] }],
+        ['alkanes', { alkanes: [{ alkaneid: '1:10', amount: '100' }] }],
+      ])('rejects an inscription UTXO containing %s', async function (_assetType, assets) {
+        await expect(
+          dummySendInscriptions({
+            toAddress: toWallet.address,
+            assetWallet: fromAssetWallet,
+            assetUtxos: [
+              genDummyUtxo(fromAssetWallet, 10000, {
+                inscriptions: [{ inscriptionId: '001', offset: 1000 }],
+                ...assets,
+              }),
+            ],
+            btcWallet: fromBtcWallet,
+            btcUtxos: [genDummyUtxo(fromBtcWallet, 10000)],
+            feeRate: 1,
+          })
+        ).rejects.toMatchObject({ code: ErrorCodes.NOT_SAFE_UTXOS })
+      })
+
       it('send one inscription', async function () {
         const ret = await dummySendInscriptions({
           toAddress: toWallet.address,

@@ -46,7 +46,6 @@ const defaultTemplate: BasePreferenceStore = {
   },
   showSafeNotice: true,
   addressFlags: {},
-  enableSignData: false,
   autoLockTimeId: DEFAULT_LOCKTIME_ID,
   openInSidePanel: false,
   developerMode: false,
@@ -57,6 +56,7 @@ const defaultTemplate: BasePreferenceStore = {
   },
 
   acceptLowFeeMode: false,
+  enableRBF: true,
 }
 
 export class PreferenceService extends EventEmitter<PreferenceServiceEvents> {
@@ -156,10 +156,6 @@ export class PreferenceService extends EventEmitter<PreferenceServiceEvents> {
 
     if (typeof this.store.externalLinkAck !== 'boolean') {
       this.store.externalLinkAck = false
-    }
-
-    if (typeof this.store.enableSignData !== 'boolean') {
-      this.store.enableSignData = false
     }
 
     if (typeof this.store.showSafeNotice !== 'boolean') {
@@ -479,14 +475,6 @@ export class PreferenceService extends EventEmitter<PreferenceServiceEvents> {
     this.store.showSafeNotice = showSafeNotice
   }
 
-  getEnableSignData(): boolean {
-    return this.store.enableSignData
-  }
-
-  setEnableSignData(enableSignData: boolean): void {
-    this.store.enableSignData = enableSignData
-  }
-
   /**
    * Version management
    */
@@ -651,6 +639,17 @@ export class PreferenceService extends EventEmitter<PreferenceServiceEvents> {
 
   setAcceptLowFeeMode = (accept: boolean): void => {
     this.store.acceptLowFeeMode = accept
+  }
+
+  getEnableRBF = (): boolean => {
+    if (typeof this.store.enableRBF !== 'boolean') {
+      return true
+    }
+    return this.store.enableRBF
+  }
+
+  setEnableRBF = (enableRBF: boolean): void => {
+    this.store.enableRBF = enableRBF
   }
 
   /**

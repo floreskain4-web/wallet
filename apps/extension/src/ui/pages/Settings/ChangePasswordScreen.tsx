@@ -27,7 +27,7 @@ export default function ChangePasswordScreen() {
     return (
       <Column>
         <Row>
-          <Text size="xs" text={`${t('password_strength')}: `} />
+          <Text size="xs" text={t('password_strength')} />
           <Text size="xs" text={text} style={{ color: color }} />
         </Row>
         {tip ? <Text size="xs" preset="sub" text={tip} /> : null}

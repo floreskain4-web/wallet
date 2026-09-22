@@ -1,5 +1,29 @@
 # @unisat/permission-service
 
+## 1.2.0
+
+### Minor Changes
+
+- fix permission
+
+## 1.1.3
+
+### Patch Changes
+
+- @unisat/wallet-storage@0.2.3
+
+## 1.1.2
+
+### Patch Changes
+
+- Respect `autoSync` and `internalRequestOrigin` options when initializing `PermissionService`.
+
+## 1.1.1
+
+### Patch Changes
+
+- @unisat/wallet-storage@0.2.2
+
 ## 1.1.0
 
 ### Minor Changes

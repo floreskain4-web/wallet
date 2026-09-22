@@ -33,7 +33,8 @@ export function Step1_Import(params: {
             onChange={(value) => {
               onClickWordsItem(wordsItems[value]);
             }}
-            value={contextData.wordsType}>
+            value={contextData.wordsType}
+          >
             {wordsItems.map((v) => (
               <Radio key={v.key} value={v.key}>
                 {v.label}
@@ -69,6 +70,9 @@ export function Step1_Import(params: {
                     onKeyUp={(e) => handleOnKeyUp(e as React.KeyboardEvent<HTMLInputElement>)}
                     autoFocus={index == curInputIndex}
                     preset={'password'}
+                    autoComplete="off"
+                    spellCheck={false}
+                    inputMode="text"
                     placeholder=""
                     data-testid={`mnemonic-import-word-${index}`}
                   />

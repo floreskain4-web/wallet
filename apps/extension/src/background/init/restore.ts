@@ -15,8 +15,9 @@ import {
   walletApiService,
   walletController
 } from '@unisat/wallet-background';
-import { bgI18n, CHAINS_MAP, t } from '@unisat/wallet-shared';
+import { CHAINS_MAP, bgI18n, t } from '@unisat/wallet-shared';
 import { BaseProxyStorageAdapter } from '@unisat/wallet-storage';
+import { ChainType } from '@unisat/wallet-types';
 
 import { encryptor } from '../utils/encryptor';
 import { HttpClient } from '../utils/http-client/httpClient';
@@ -65,7 +66,12 @@ export async function restoreAppState() {
       eventBus: bgEventBus as any
     });
 
-    const chainType = preferenceService.getChainType();
+    let chainType = preferenceService.getChainType();
+    if (!chainType || !CHAINS_MAP[chainType]) {
+      chainType = ChainType.BITCOIN_MAINNET;
+      preferenceService.setChainType(chainType);
+    }
+
     const endpoint = CHAINS_MAP[chainType].endpoints[0];
     const httpClient = new HttpClient();
     await walletApiService.init({
@@ -77,7 +83,8 @@ export async function restoreAppState() {
 
     await permissionService.init({
       storage: proxyStorage,
-      logger: logger
+      logger: logger,
+      autoSync: true
     });
 
     await contactBookService.init({

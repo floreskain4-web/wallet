@@ -6,7 +6,7 @@ import { colors } from '@/ui/theme/colors';
 import { copyToClipboard, shortAddress } from '@/ui/utils';
 import { CopyOutlined, EditOutlined, EllipsisOutlined, KeyOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { KeyringType } from '@unisat/keyring-service/types';
-import { Account, KEYRING_CLASS, getAccountDerivationPath } from '@unisat/wallet-shared';
+import { Account, getAccountDerivationPath } from '@unisat/wallet-shared';
 import {
   accountActions,
   useAppDispatch,
@@ -30,6 +30,9 @@ interface MyItemProps {
   autoNav?: boolean;
 }
 const ITEM_HEIGHT = 64;
+const PRIVATE_KEY_EXPORTABLE_ACCOUNT_TYPES = [KeyringType.HdKeyring, KeyringType.SimpleKeyring];
+const ACCOUNT_CREATABLE_KEYRING_TYPES = [KeyringType.HdKeyring, KeyringType.KeystoneKeyring];
+const DERIVED_PATH_VISIBLE_KEYRING_TYPES = [KeyringType.HdKeyring, KeyringType.KeystoneKeyring];
 
 export function MyItem({ account, autoNav }: MyItemProps, ref) {
   const navigate = useNavigate();
@@ -43,8 +46,9 @@ export function MyItem({ account, autoNav }: MyItemProps, ref) {
     return <div style={{ height: ITEM_HEIGHT }} />;
   }
   const [optionsVisible, setOptionsVisible] = useState(false);
+  const canExportPrivateKey = PRIVATE_KEY_EXPORTABLE_ACCOUNT_TYPES.includes(account.type as KeyringType);
   let path = '';
-  if (keyring.type !== KEYRING_CLASS.PRIVATE_KEY) {
+  if (DERIVED_PATH_VISIBLE_KEYRING_TYPES.includes(keyring.type as KeyringType)) {
     path = ` (${getAccountDerivationPath(keyring.hdPath, account.index ?? 0, keyring.accountIndexDerivation)})`;
   }
 
@@ -62,7 +66,8 @@ export function MyItem({ account, autoNav }: MyItemProps, ref) {
         marginLeft: 10,
         marginRight: 10
       }}
-      data-testid={`account-item-${account.address}`}>
+      data-testid={`account-item-${account.address}`}
+    >
       <Row>
         <Column style={{ width: 20 }} selfItemsCenter>
           {selected ? <Icon icon="circle-check" color="gold" /> : <Icon icon="circle-check" color="white_muted2" />}
@@ -76,8 +81,9 @@ export function MyItem({ account, autoNav }: MyItemProps, ref) {
             }
             if (autoNav) navigate('MainScreen');
           }}
-          style={{ height: 40 }}>
-          <Text text={account.alianName} style={{ overflow: 'hidden', maxWidth: 180 }} />
+          style={{ height: 40 }}
+        >
+          <Text text={shortAddress(account.alianName, 8)} ellipsis />
           <Text text={`${shortAddress(account.address)}${path}`} preset="sub" />
         </Column>
       </Row>
@@ -97,13 +103,15 @@ export function MyItem({ account, autoNav }: MyItemProps, ref) {
             }}
             onMouseDown={(e) => {
               setOptionsVisible(false);
-            }}></div>
+            }}
+          ></div>
         )}
 
         <Icon
           onClick={async (e) => {
             setOptionsVisible(!optionsVisible);
-          }}>
+          }}
+        >
           <EllipsisOutlined />
         </Icon>
 
@@ -116,11 +124,13 @@ export function MyItem({ account, autoNav }: MyItemProps, ref) {
               right: 0,
               padding: 5,
               zIndex: 10
-            }}>
+            }}
+          >
             <Row
               onClick={() => {
                 navigate('EditAccountNameScreen', { account });
-              }}>
+              }}
+            >
               <EditOutlined />
               <Text text={t('edit_name')} size="sm" />
             </Row>
@@ -129,7 +139,8 @@ export function MyItem({ account, autoNav }: MyItemProps, ref) {
                 copyToClipboard(account.address);
                 tools.toastSuccess(t('copied'));
                 setOptionsVisible(false);
-              }}>
+              }}
+            >
               <CopyOutlined />
               <Text text={t('copy_address')} size="sm" />
             </Row>
@@ -142,11 +153,12 @@ export function MyItem({ account, autoNav }: MyItemProps, ref) {
               <CopyOutlined />
               <Text text={t('copy_publickey')} size="sm" />
             </Row> */}
-            {account.type !== KeyringType.KeystoneKeyring && account.type !== KeyringType.ColdWalletKeyring && (
+            {canExportPrivateKey && (
               <Row
                 onClick={() => {
                   navigate('ExportPrivateKeyScreen', { account });
-                }}>
+                }}
+              >
                 <KeyOutlined />
                 <Text text={t('export_private_key')} size="sm" />
               </Row>
@@ -196,6 +208,7 @@ export default function SwitchAccountScreen() {
   }, []);
 
   const layoutHeight = Math.ceil((window.innerHeight - 64) / ITEM_HEIGHT) * ITEM_HEIGHT;
+  const canCreateAccount = ACCOUNT_CREATABLE_KEYRING_TYPES.includes(keyring.type as KeyringType);
 
   return (
     <Layout>
@@ -205,15 +218,16 @@ export default function SwitchAccountScreen() {
         }}
         title={t('switch_account')}
         RightComponent={
-          keyring.type == KEYRING_CLASS.PRIVATE_KEY ? null : (
+          canCreateAccount ? (
             <Icon
               onClick={() => {
                 nav.navigate('CreateAccountScreen', {});
               }}
-              data-testid="add-account-button">
+              data-testid="add-account-button"
+            >
               <PlusCircleOutlined />
             </Icon>
-          )
+          ) : null
         }
       />
       <Content style={{ padding: 5 }}>
@@ -223,7 +237,8 @@ export default function SwitchAccountScreen() {
           height={layoutHeight}
           itemHeight={ITEM_HEIGHT}
           itemKey={(item) => item.key}
-          ref={refList}>
+          ref={refList}
+        >
           {(item, index) => <ForwardMyItem account={item.account} autoNav={true} />}
         </VirtualList>
       </Content>

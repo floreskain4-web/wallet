@@ -11,6 +11,7 @@ export async function sendBTC({
   networkType,
   changeAddress,
   feeRate,
+  enableRBF = true,
   memo,
   memos,
 }: {
@@ -22,6 +23,7 @@ export async function sendBTC({
   networkType: NetworkType
   changeAddress: string
   feeRate: number
+  enableRBF?: boolean
   memo?: string
   memos?: string[]
 }): Promise<{
@@ -32,7 +34,7 @@ export async function sendBTC({
     throw new WalletError(ErrorCodes.NOT_SAFE_UTXOS)
   }
 
-  const tx = createTx({ networkType, feeRate, changeAddress, enableRBF: true })
+  const tx = createTx({ networkType, feeRate, changeAddress, enableRBF })
 
   tos.forEach(v => {
     tx.addOutput(v.address, v.satoshis)
@@ -64,17 +66,19 @@ export async function sendAllBTC({
   toAddress,
   networkType,
   feeRate,
+  enableRBF = true,
 }: {
   btcUtxos: UnspentOutput[]
   toAddress: string
   networkType: NetworkType
   feeRate: number
+  enableRBF?: boolean
 }) {
   if (utxoHelper.hasAnyAssets(btcUtxos)) {
     throw new WalletError(ErrorCodes.NOT_SAFE_UTXOS)
   }
 
-  const tx = createTx({ networkType, feeRate, enableRBF: true })
+  const tx = createTx({ networkType, feeRate, enableRBF })
   tx.addOutput(toAddress, UTXO_DUST)
 
   const toSignInputs: ToSignInput[] = []
@@ -83,7 +87,7 @@ export async function sendAllBTC({
     toSignInputs.push({ index, publicKey: v.pubkey })
   })
 
-  const fee = await tx.calNetworkFee()
+  const fee = tx.calSendAllNetworkFee(toAddress)
   const unspent = tx.getTotalInput() - fee
   if (unspent < UTXO_DUST) {
     throw new WalletError(ErrorCodes.INSUFFICIENT_BTC_UTXO)

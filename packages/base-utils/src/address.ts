@@ -2,6 +2,12 @@ const BASE58_REGEX = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwx
 
 const BECH32_REGEX = /^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/
 
+const PAY_TO_ANCHOR_ADDRESSES = new Set([
+  'bc1pfeessrawgf',
+  'tb1pfees9rn5nz',
+  'bcrt1pfeesnyr2tx',
+])
+
 /**
  * Validate if a Bitcoin address is likely valid.
  * This is a lightweight check, NOT a full validation with checksum.
@@ -10,12 +16,15 @@ const BECH32_REGEX = /^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/
  * - P2PKH/P2SH (Base58): 26-35 chars
  * - P2WPKH (bc1q/tb1q): 42 chars (20-byte witness)
  * - P2TR (bc1p/tb1p): 62 chars (32-byte witness with bech32m)
+ * - P2A: known Pay-to-Anchor address (2-byte witness v1 program)
  *
  * @param address - Bitcoin address to validate
  * @returns true if address format looks valid, false otherwise
  */
 export function isAddressLikelyValid(address: string): boolean {
   if (!address) return false
+
+  if (PAY_TO_ANCHOR_ADDRESSES.has(address.toLowerCase())) return true
 
   const first = address[0]
 

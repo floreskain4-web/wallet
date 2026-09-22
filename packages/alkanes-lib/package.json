@@ -1,0 +1,55 @@
+{
+  "name": "@unisat/alkanes-lib",
+  "version": "0.4.0",
+  "description": "Minimal Alkanes utilities (varint encipher/decipher) extracted for UniSat projects",
+  "main": "lib/index.js",
+  "module": "lib/index.mjs",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*",
+    "src/**/*",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib",
+    "prepublishOnly": "pnpm run clean && pnpm run build"
+  },
+  "author": "UniSat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@unisat/wallet-bitcoin": "^1.0.0",
+    "@unisat/wallet-types": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^7.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^0.34.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unisat-wallet/wallet-toolkit.git",
+    "directory": "packages/alkanes-lib"
+  },
+  "bugs": {
+    "url": "https://github.com/unisat-wallet/wallet-toolkit/issues"
+  },
+  "homepage": "https://github.com/unisat-wallet/wallet-toolkit/tree/main/packages/alkanes-lib#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}

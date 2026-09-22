@@ -1,5 +1,6 @@
 import { Button, Content, Header, Input, Layout } from '@/ui/components';
 import { useEditAccountNameScreenLogic } from '@unisat/wallet-state';
+import { MAX_ALIAS_NAME_LENGTH } from '@unisat/wallet-shared';
 
 export default function EditAccountNameScreen() {
   const { onInputChange, onClickBack, handleOnClick, handleOnKeyUp, isValidName, truncatedTitle, account, t } =
@@ -16,7 +17,7 @@ export default function EditAccountNameScreen() {
           onChange={onInputChange}
           onKeyUp={handleOnKeyUp}
           autoFocus={true}
-          maxLength={20}
+          maxLength={MAX_ALIAS_NAME_LENGTH}
         />
         <Button disabled={!isValidName} text={t('change_account_name')} preset="primary" onClick={handleOnClick} />
       </Content>

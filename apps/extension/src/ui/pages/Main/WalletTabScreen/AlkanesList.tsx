@@ -9,7 +9,7 @@ export function AlkanesList({ showHeader = false }: { showHeader?: boolean }) {
   return (
     <Column>
       {showHeader ? (
-        <Text mx="md" text={`${t('alkanes')} (${Math.max(total, 0)})`} size="sm" color="white_muted" mb="sm" />
+        <Text text={`${t('alkanes')} (${Math.max(total, 0)})`} size="sm" color="white_muted" mb="sm" />
       ) : null}
       <InfiniteList
         data={items}

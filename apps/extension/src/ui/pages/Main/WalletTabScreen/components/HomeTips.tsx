@@ -1,10 +1,9 @@
 import { Column, Text } from '@/ui/components';
-import { useAddressTips, useWalletConfig } from '@unisat/wallet-state';
+import { useWalletConfig } from '@unisat/wallet-state';
 
 export function HomeTips() {
   const walletConfig = useWalletConfig();
-  const addressTips = useAddressTips();
-  if (walletConfig.chainTip || walletConfig.statusMessage || addressTips.homeTip) {
+  if (walletConfig.chainTip || walletConfig.statusMessage) {
     return (
       <Column
         py={'lg'}
@@ -17,7 +16,6 @@ export function HomeTips() {
         }}>
         {walletConfig.chainTip && <Text text={walletConfig.chainTip} color="text" textCenter />}
         {walletConfig.statusMessage && <Text text={walletConfig.statusMessage} color="danger" textCenter />}
-        {addressTips.homeTip && <Text text={addressTips.homeTip} color="warning" textCenter />}
       </Column>
     );
   }

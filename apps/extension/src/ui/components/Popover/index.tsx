@@ -7,15 +7,17 @@ export const Popover = (props: {
   children: React.ReactNode;
   onClose?: () => void;
   contentStyle?: React.CSSProperties;
+  closeStyle?: React.CSSProperties;
   'data-testid'?: string;
 }) => {
-  const { children, onClose, contentStyle, 'data-testid': dataTestId, ...rest } = props;
+  const { children, onClose, contentStyle, closeStyle, 'data-testid': dataTestId } = props;
   return (
     <div
       className="popover-container"
       style={{
         backgroundColor: 'rgba(0,0,0,0.8)'
-      }}>
+      }}
+    >
       <div
         style={{
           backgroundColor: 'rgba(36, 40, 47, 1)',
@@ -25,14 +27,16 @@ export const Popover = (props: {
           position: 'relative',
           ...contentStyle
         }}
-        data-testid={dataTestId}>
+        data-testid={dataTestId}
+      >
         {onClose && (
           <Row
-            style={{ position: 'absolute', top: 20, right: 20 }}
+            style={{ position: 'absolute', top: 20, right: 20, ...closeStyle }}
             justifyEnd
             onClick={() => {
               onClose();
-            }}>
+            }}
+          >
             <Icon icon="close" size={12} />
           </Row>
         )}

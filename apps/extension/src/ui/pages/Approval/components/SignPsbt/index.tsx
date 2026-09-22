@@ -1,7 +1,7 @@
 import VirtualList, { ListRef } from 'rc-virtual-list';
 import { forwardRef, useEffect, useRef } from 'react';
 
-import { Button, Card, Column, Content, Footer, Header, Layout, Row, Text } from '@/ui/components';
+import { Button, Card, Column, Content, Footer, Header, Input, Layout, Row, Text } from '@/ui/components';
 import { BtcUsd } from '@/ui/components/BtcUsd';
 import ColdWalletSignPsbt from '@/ui/components/ColdWallet/ColdWalletSignPsbt';
 import { ContractPopover } from '@/ui/components/ContractPopover';
@@ -13,7 +13,16 @@ import KeystoneSignScreen from '@/ui/pages/Wallet/KeystoneSignScreen';
 import { fontSizes } from '@/ui/theme/font';
 import { numUtils } from '@unisat/base-utils';
 import { KeystoneSignEnum } from '@unisat/keyring-service/types';
-import { PsbtLocalInfo, SignPsbtProps, useBTCUnit, useI18n, useSignPsbtLogic } from '@unisat/wallet-state';
+import { AccountSignMethod } from '@unisat/wallet-shared';
+import {
+  PsbtLocalInfo,
+  SignPsbtProps,
+  useBTCUnit,
+  useCurrentAccountCapabilities,
+  useI18n,
+  useSignPsbtLogic,
+  useTools
+} from '@unisat/wallet-state';
 
 import ActionOverviewSection from './components/ActionOverviewSection';
 import AssetOverviewSection from './components/AssetOverviewSection';
@@ -22,6 +31,7 @@ import MultiSignDisclaimerModal from './components/MultiSignDisclaimerModal';
 import { OutputsList } from './components/OutputsList';
 import PsbtDataSection from './components/PsbtDataSection';
 import { SignPsbtSection } from './components/Section';
+import { getIncrementalListResetKey } from './components/useIncrementalList';
 
 const ITEM_HEIGHT = 72 + 8; // item height + margin top
 
@@ -78,6 +88,9 @@ function TransactionItem(
 }
 
 export default function SignPsbt(props: SignPsbtProps) {
+  const accountCapabilities = useCurrentAccountCapabilities();
+  const tools = useTools();
+  const isReadonlySigning = accountCapabilities.signMethod === AccountSignMethod.External;
   const {
     showLoading,
     isPsbtRiskPopoverVisible,
@@ -93,6 +106,8 @@ export default function SignPsbt(props: SignPsbtProps) {
     toSignDatas,
     currentToSignData,
     currentDecodedPsbt,
+    readonlySignedPsbtHex,
+    setReadonlySignedPsbtHex,
 
     // signing state
     isKeystoneSigning,
@@ -135,6 +150,7 @@ export default function SignPsbt(props: SignPsbtProps) {
   let header = props.header;
 
   const isValidData = isValid && currentDecodedPsbt;
+  const listResetKey = getIncrementalListResetKey(currentToSignData?.psbtHex || '');
 
   const ForwardTransactionItem = forwardRef(TransactionItem);
   const refList = useRef<ListRef>(null);
@@ -210,7 +226,8 @@ export default function SignPsbt(props: SignPsbtProps) {
                 borderColor: hasSighashNoneRisk || hasParseError ? '#ff4d4f' : '#2C2C2C',
                 borderWidth: 1,
                 background: '#1A1A1A'
-              }}>
+              }}
+            >
               <Row justifyBetween fullX>
                 <Column>
                   <Text text={`${t('transaction_count')}: ${toSignDatas.length}`} size="xs" color="textDim" />
@@ -232,7 +249,8 @@ export default function SignPsbt(props: SignPsbtProps) {
             height={layoutHeight}
             itemHeight={ITEM_HEIGHT}
             itemKey={(item) => 'psbt_' + item.index}
-            ref={refList}>
+            ref={refList}
+          >
             {(item, index) => (
               <ForwardTransactionItem
                 buttonText={item.buttonText}
@@ -295,12 +313,14 @@ export default function SignPsbt(props: SignPsbtProps) {
                   decodedPsbt={currentDecodedPsbt}
                   toSignData={currentToSignData}
                   runesPriceMap={runesPriceMap}
+                  resetKey={listResetKey}
                   setContractPopoverData={setContractPopoverData}
                 />
 
                 <OutputsList
                   decodedPsbt={currentDecodedPsbt}
                   runesPriceMap={runesPriceMap}
+                  resetKey={listResetKey}
                   setContractPopoverData={setContractPopoverData}
                 />
               </Column>
@@ -309,6 +329,46 @@ export default function SignPsbt(props: SignPsbtProps) {
 
           {/* PSBT data */}
           <PsbtDataSection toSignData={currentToSignData} />
+
+          {isReadonlySigning && (
+            <SignPsbtSection title={t('readonly_signing')}>
+              <Card>
+                <Column gap="sm" fullX>
+                  <Text text={`1. ${t('readonly_signing_copy_step')}`} color="textDim" />
+
+                  <Button
+                    preset="defaultV2"
+                    onClick={() => {
+                      tools.copyToClipboard(
+                        JSON.stringify([
+                          currentToSignData.psbtHex,
+                          {
+                            autoFinalized: currentToSignData.autoFinalized !== false,
+                            toSignInputs: currentToSignData.toSignInputs
+                          }
+                        ])
+                      );
+                    }}
+                    text={t('readonly_signing_copy_button')}
+                  />
+                </Column>
+              </Card>
+              <Card>
+                <Column gap="sm" fullX>
+                  <Text text={`2. ${t('readonly_signing_paste_step')}`} color="textDim" />
+                  <Input
+                    preset="text"
+                    placeholder={t('readonly_signing_paste_placeholder')}
+                    value={readonlySignedPsbtHex}
+                    onChange={(e) => {
+                      setReadonlySignedPsbtHex(e.target.value.trim());
+                    }}
+                    data-testid="readonly-signed-psbt-input"
+                  />
+                </Column>
+              </Card>
+            </SignPsbtSection>
+          )}
         </Column>
       </Content>
 

@@ -28,13 +28,13 @@ import {
 } from '@unisat/wallet-bitcoin'
 import {
   Account,
+  AccountSignMethod,
   AddressTokenSummary,
   AddressUserToSignInput,
   BRC20HistoryItem,
   BUS_EVENTS,
   BUS_METHODS,
   BitcoinBalance,
-  CAT_VERSION,
   CHAINS_MAP,
   ConnectedSite,
   CosmosBalance,
@@ -58,6 +58,7 @@ import {
   UTXO,
   WalletKeyring,
   bgI18n,
+  getAccountCapabilities,
   getLockTimeInfo,
   t,
 } from '@unisat/wallet-shared'
@@ -72,6 +73,7 @@ import {
   walletApiService,
 } from '../services'
 import { getChainInfo } from '../shared/utils'
+import { chainTypeToCanonicalNetwork } from '../shared/utils/deriveContextHash'
 import { bgEventBus } from '../utils/eventBus'
 import { getEstimateFee, psbtFromString } from '../utils/psbt-utils'
 
@@ -87,6 +89,13 @@ import log from 'loglevel'
 import approvalService from 'src/services/approval'
 import { ContactBookItem } from '../services/contactBook'
 import BaseController from './base'
+
+type CorruptedWalletKeyring = WalletKeyring & {
+  isCorrupted: true
+  corruptedReason: string
+}
+
+export type WalletKeyringWithStatus = WalletKeyring | CorruptedWalletKeyring
 
 export type AccountAsset = {
   name: string
@@ -110,11 +119,35 @@ const caculateTapLeafHash = (input: any, pubkey: Buffer) => {
   return tapLeafHashes.map(each => each.hash)
 }
 
+export function canDeriveAddressFromPublicKey(
+  pubkey: string,
+  addressType: AddressType,
+  networkType: NetworkType
+) {
+  try {
+    return Boolean(publicKeyToAddress(pubkey, addressType, networkType))
+  } catch (e) {
+    return false
+  }
+}
+
+function assertCanCreateSigningRequest(account: Account | null | undefined) {
+  if (!getAccountCapabilities(account).canCreateSigningRequest) {
+    throw new Error(t('not_supported'))
+  }
+}
+
 export class WalletController extends BaseController {
   timer: any = null
 
   private _cacheCosmosKeyringKey: string | null = null
   private _cosmosKeyring: CosmosKeyring | null = null
+
+  private clearCosmosKeyringCache = () => {
+    this._cosmosKeyring?.destroy()
+    this._cosmosKeyring = null
+    this._cacheCosmosKeyringKey = null
+  }
 
   cosmosChainInfoMap: Record<string, CosmosChainInfo> = Object.assign({}, COSMOS_CHAINS_MAP)
 
@@ -182,6 +215,7 @@ export class WalletController extends BaseController {
   }
 
   lockWallet = async () => {
+    this.clearCosmosKeyringCache()
     await keyringService.setLocked()
     // sessionService.broadcastEvent(SESSION_EVENTS.accountsChanged, [])
     sessionService.broadcastEvent(SESSION_EVENTS.lock)
@@ -281,9 +315,13 @@ export class WalletController extends BaseController {
 
   /* keyrings */
 
-  clearKeyrings = () => keyringService.clearKeyrings()
+  clearKeyrings = () => {
+    this.clearCosmosKeyringCache()
+    return keyringService.clearKeyrings()
+  }
 
   resetAllData = async () => {
+    this.clearCosmosKeyringCache()
     await keyringService.resetAllData()
     await preferenceService.resetAllData()
     await permissionService.resetAllData()
@@ -297,6 +335,9 @@ export class WalletController extends BaseController {
     const isValidPassword = await this.verifyPassword(password)
     if (!isValidPassword) {
       throw new Error(t('password_error'))
+    }
+    if (type !== KeyringType.HdKeyring && type !== KeyringType.SimpleKeyring) {
+      throw new Error(t('not_supported'))
     }
     const keyring = await keyringService.getKeyringForAccount(pubkey, type)
     if (!keyring) return null
@@ -318,23 +359,18 @@ export class WalletController extends BaseController {
     if (!isValidPassword) {
       throw new Error(t('password_error'))
     }
-    const originKeyring = keyringService.keyrings[keyring.index]!
-    const serialized = await originKeyring.serialize()
-    return {
-      mnemonic: serialized.mnemonic,
-      hdPath: serialized.hdPath,
-      passphrase: serialized.passphrase,
-    }
+    return keyringService.getKeyringRecoveryData(keyring.index)
   }
 
   createKeyringWithPrivateKey = async (
     data: string,
     addressType: AddressType,
-    alianName?: string
+    alianName?: string,
+    compressed?: boolean
   ) => {
     let originKeyring: Keyring
     try {
-      originKeyring = await keyringService.importPrivateKey(data, addressType)
+      originKeyring = await keyringService.importPrivateKey(data, addressType, compressed)
     } catch (e) {
       log.error(e)
       throw e
@@ -350,11 +386,12 @@ export class WalletController extends BaseController {
       keyringService.keyrings.length - 1
     )
     await this.changeKeyring(keyring)
+
+    preferenceService.setShowSafeNotice(true)
   }
 
-  getPreMnemonics = () => keyringService.getPreMnemonics()
-  generatePreMnemonic = async () => {
-    return await keyringService.generatePreMnemonic()
+  generatePreMnemonic = async (strength: 128 | 256 = 128) => {
+    return await keyringService.generatePreMnemonic(strength)
   }
   removePreMnemonics = () => keyringService.removePreMnemonics()
   createKeyringWithMnemonics = async (
@@ -386,6 +423,39 @@ export class WalletController extends BaseController {
     )
 
     await this.changeKeyring(keyring)
+
+    preferenceService.setShowSafeNotice(true)
+  }
+
+  createKeyringWithPreMnemonic = async (
+    hdPath: string,
+    passphrase: string,
+    addressType: AddressType,
+    accountCount: number,
+    accountIndexDerivation = false
+  ) => {
+    const originKeyring = await keyringService.createKeyringWithPreMnemonic(
+      hdPath,
+      passphrase,
+      addressType,
+      accountCount,
+      accountIndexDerivation
+    )
+    keyringService.removePreMnemonics()
+
+    const displayedKeyring = await keyringService.displayForKeyring(
+      originKeyring,
+      addressType,
+      keyringService.keyrings.length - 1
+    )
+    const keyring = this.displayedKeyringToWalletKeyring(
+      displayedKeyring,
+      keyringService.keyrings.length - 1
+    )
+
+    await this.changeKeyring(keyring)
+
+    preferenceService.setShowSafeNotice(true)
   }
 
   createTmpKeyringWithMnemonics = async (
@@ -408,6 +478,25 @@ export class WalletController extends BaseController {
       accountIndexDerivation,
     })
     const displayedKeyring = await keyringService.displayForKeyring(originKeyring, addressType, -1)
+    return this.displayedKeyringToWalletKeyring(displayedKeyring, -1, false)
+  }
+
+  createTmpKeyringWithPreMnemonic = async (
+    hdPath: string,
+    passphrase: string,
+    addressType: AddressType,
+    accountCount = 1,
+    accountIndexDerivation = false
+  ) => {
+    const originKeyring = await keyringService.createTmpKeyringWithPreMnemonic(
+      hdPath,
+      passphrase,
+      addressType,
+      accountCount,
+      accountIndexDerivation
+    )
+    const displayedKeyring = await keyringService.displayForKeyring(originKeyring, addressType, -1)
+    originKeyring.clearRecoveryData?.()
     return this.displayedKeyringToWalletKeyring(displayedKeyring, -1, false)
   }
 
@@ -464,8 +553,14 @@ export class WalletController extends BaseController {
     return this.displayedKeyringToWalletKeyring(displayedKeyring, -1, false)
   }
 
-  createTmpKeyringWithPrivateKey = async (privateKey: string, addressType: AddressType) => {
-    const originKeyring = keyringService.createTmpKeyring(KeyringType.SimpleKeyring, [privateKey])
+  createTmpKeyringWithPrivateKey = async (
+    privateKey: string,
+    addressType: AddressType,
+    compressed?: boolean
+  ) => {
+    const originKeyring = keyringService.createTmpKeyring(KeyringType.SimpleKeyring, [
+      compressed === undefined ? privateKey : { privateKey, compressed },
+    ])
     const displayedKeyring = await keyringService.displayForKeyring(originKeyring, addressType, -1)
     return this.displayedKeyringToWalletKeyring(displayedKeyring, -1, false)
   }
@@ -530,6 +625,7 @@ export class WalletController extends BaseController {
       keyringService.keyrings.length - 1
     )
     await this.changeKeyring(keyring)
+    preferenceService.setShowSafeNotice(true)
   }
 
   createKeyringWithColdWallet = async (
@@ -569,6 +665,7 @@ export class WalletController extends BaseController {
 
     await this.changeKeyring(keyring)
 
+    preferenceService.setShowSafeNotice(true)
     return keyring
   }
 
@@ -604,6 +701,7 @@ export class WalletController extends BaseController {
   }
 
   removeKeyring = async (keyring: WalletKeyring) => {
+    this.clearCosmosKeyringCache()
     await keyringService.removeKeyring(keyring.index)
     const keyrings = await this.getKeyrings()
     const nextKeyring = keyrings[keyrings.length - 1]
@@ -619,6 +717,9 @@ export class WalletController extends BaseController {
   }
 
   deriveNewAccountFromMnemonic = async (keyring: WalletKeyring, alianName?: string) => {
+    if (keyring.type !== KeyringType.HdKeyring && keyring.type !== KeyringType.KeystoneKeyring) {
+      throw new Error(t('not_supported'))
+    }
     const _keyring = keyringService.keyrings[keyring.index]!
     await keyringService.addNewAccount(_keyring)
 
@@ -643,7 +744,12 @@ export class WalletController extends BaseController {
     return accounts.filter(x => x).length
   }
 
-  changeKeyring = async (keyring: WalletKeyring, accountIndex = 0) => {
+  changeKeyring = async (keyring: WalletKeyringWithStatus, accountIndex = 0) => {
+    if (!this.isUsableKeyring(keyring)) {
+      throw new Error('Keyring is corrupted')
+    }
+
+    this.clearCosmosKeyringCache()
     preferenceService.setCurrentKeyringIndex(keyring.index)
     const account = keyring.accounts[accountIndex]!
     preferenceService.setCurrentAccount(account)
@@ -670,6 +776,10 @@ export class WalletController extends BaseController {
 
   changeAddressType = async (addressType: AddressType) => {
     const currentAccount = await this.getCurrentAccount()
+    const currentKeyring = await this.getCurrentKeyring()
+    if (!getAccountCapabilities(currentKeyring).canChangeAddressType) {
+      throw new Error(t('not_supported'))
+    }
     const currentKeyringIndex = preferenceService.getCurrentKeyringIndex()
     await keyringService.changeAddressType(currentKeyringIndex, addressType)
     const keyring = await this.getCurrentKeyring()
@@ -680,6 +790,7 @@ export class WalletController extends BaseController {
   formatOptionsToSignInputs = async (_psbt: string | bitcoin.Psbt, options?: SignPsbtOptions) => {
     const account = await this.getCurrentAccount()
     if (!account) throw null
+    assertCanCreateSigningRequest(account)
 
     let toSignInputs: ToSignInput[] = []
     if (options && options.toSignInputs) {
@@ -785,6 +896,7 @@ export class WalletController extends BaseController {
   formatPsbt = async (psbt: bitcoin.Psbt, toSignInputs: ToSignInput[], autoFinalized?: boolean) => {
     const account = await this.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
     const keyring = await this.getCurrentKeyring()
     if (!keyring) throw new Error('no current keyring')
@@ -943,6 +1055,9 @@ export class WalletController extends BaseController {
   _signPsbt = async (psbt: bitcoin.Psbt, toSignInputs: ToSignInput[], autoFinalized: boolean) => {
     const account = await this.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    if (getAccountCapabilities(account).signMethod !== AccountSignMethod.Local) {
+      throw new Error(t('not_supported'))
+    }
 
     const keyring = await this.getCurrentKeyring()
     if (!keyring) throw new Error('no current keyring')
@@ -991,6 +1106,11 @@ export class WalletController extends BaseController {
 
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
+
+    if (getAccountCapabilities(account).signMethod !== AccountSignMethod.Local) {
+      throw new Error('Readonly wallet cannot sign messages')
+    }
 
     const networkType = this.getNetworkType()
     if (params.type === SignMessageType.BIP322_SIMPLE) {
@@ -1014,11 +1134,14 @@ export class WalletController extends BaseController {
   deriveContextHash = async (appName: string, context: string): Promise<string> => {
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    // chainTypeToCanonicalNetwork throws WalletError(UNSUPPORTED_NETWORK) for
+    // Fractal / unmapped chains; surface it unchanged to the dApp.
+    const canonicalNetwork = chainTypeToCanonicalNetwork(preferenceService.getChainType())
     const keyring = await keyringService.getKeyringForAccount(account.pubkey, account.type)
     if (!keyring.deriveContextHash) {
       throw new Error('Current keyring does not support deriveContextHash')
     }
-    return keyring.deriveContextHash(account.pubkey, appName, context)
+    return keyring.deriveContextHash(account.pubkey, appName, canonicalNetwork, context)
   }
 
   addContact = (data: ContactBookItem) => {
@@ -1115,6 +1238,10 @@ export class WalletController extends BaseController {
 
   getNetworkType = () => {
     const chainType = this.getChainType()
+    if (!CHAINS_MAP[chainType]) {
+      preferenceService.setChainType(ChainType.BITCOIN_MAINNET)
+      return CHAINS_MAP[ChainType.BITCOIN_MAINNET]!.networkType
+    }
     return CHAINS_MAP[chainType]!.networkType
   }
 
@@ -1205,6 +1332,7 @@ export class WalletController extends BaseController {
     amount,
     feeRate,
     btcUtxos,
+    enableRBF = true,
     memo,
     memos,
   }: {
@@ -1212,6 +1340,7 @@ export class WalletController extends BaseController {
     amount: number
     feeRate?: number
     btcUtxos?: UnspentOutput[]
+    enableRBF?: boolean
     memo?: string
     memos?: string[]
   }): Promise<{
@@ -1222,6 +1351,7 @@ export class WalletController extends BaseController {
 
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
     const networkType = this.getNetworkType()
 
@@ -1248,6 +1378,7 @@ export class WalletController extends BaseController {
       networkType,
       changeAddress: account.address,
       feeRate: feeRate!,
+      enableRBF,
       memo: memo!,
       memos: memos!,
     })
@@ -1285,16 +1416,19 @@ export class WalletController extends BaseController {
     to,
     feeRate,
     btcUtxos,
+    enableRBF = true,
   }: {
     to: string
     feeRate: number
     btcUtxos?: UnspentOutput[]
+    enableRBF?: boolean
   }): Promise<{
     psbtHex: string
     toSignInputs: ToSignInput[]
   }> => {
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
     const networkType = this.getNetworkType()
 
@@ -1311,6 +1445,7 @@ export class WalletController extends BaseController {
       toAddress: to,
       networkType,
       feeRate,
+      enableRBF,
     })
 
     let totalInput = 0
@@ -1352,15 +1487,18 @@ export class WalletController extends BaseController {
     feeRate,
     outputValue,
     btcUtxos,
+    enableRBF = true,
   }: {
     to: string
     inscriptionId: string
     feeRate?: number
     outputValue?: number
     btcUtxos?: txHelpers.UnspentOutput[]
+    enableRBF?: boolean
   }): Promise<ToSignData> => {
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
     const networkType = this.getNetworkType()
 
@@ -1395,6 +1533,7 @@ export class WalletController extends BaseController {
       networkType,
       changeAddress: account.address,
       feeRate,
+      enableRBF,
       outputValue: outputValue || assetUtxo.satoshis,
       enableMixed: true,
     })
@@ -1431,15 +1570,18 @@ export class WalletController extends BaseController {
     inscriptionIds,
     feeRate,
     btcUtxos,
+    enableRBF = true,
   }: {
     to: string
     inscriptionIds: string[]
     utxos: UTXO[]
     feeRate: number
     btcUtxos?: txHelpers.UnspentOutput[]
+    enableRBF?: boolean
   }): Promise<ToSignData> => {
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
     const networkType = this.getNetworkType()
 
@@ -1482,6 +1624,7 @@ export class WalletController extends BaseController {
       networkType,
       changeAddress: account.address,
       feeRate,
+      enableRBF,
     })
 
     const toSignData = await this.getToSignData({
@@ -1515,15 +1658,18 @@ export class WalletController extends BaseController {
     feeRate,
     outputValue,
     btcUtxos,
+    enableRBF = true,
   }: {
     to: string
     inscriptionId: string
     feeRate: number
     outputValue: number
     btcUtxos?: txHelpers.UnspentOutput[]
+    enableRBF?: boolean
   }): Promise<ToSignData> => {
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
     const networkType = this.getNetworkType()
 
@@ -1544,6 +1690,7 @@ export class WalletController extends BaseController {
       networkType,
       changeAddress: account.address,
       feeRate,
+      enableRBF,
       outputValue,
     })
 
@@ -1663,17 +1810,85 @@ export class WalletController extends BaseController {
     return keyring
   }
 
-  getKeyrings = async (): Promise<WalletKeyring[]> => {
+  corruptedDisplayedKeyringToWalletKeyring = (
+    displayedKeyring: DisplayedKeyring,
+    index: number,
+    corruptedReason: string,
+    initName = true
+  ): CorruptedWalletKeyring => {
+    const key = 'keyring_' + index
+    const type = displayedKeyring.type
+    const alianName = preferenceService.getKeyringAlianName(
+      key,
+      initName ? `${KEYRING_TYPES[type]!.alianName} #${index + 1}` : ''
+    )!
+
+    return {
+      index,
+      key,
+      type,
+      addressType: displayedKeyring.addressType,
+      accounts: [],
+      alianName,
+      hdPath: '',
+      accountIndexDerivation: false,
+      isCorrupted: true,
+      corruptedReason,
+    }
+  }
+
+  safeDisplayedKeyringToWalletKeyring = (
+    displayedKeyring: DisplayedKeyring | undefined,
+    index: number,
+    initName = true
+  ): WalletKeyringWithStatus | null => {
+    if (!displayedKeyring || displayedKeyring.type === KeyringType.Empty) {
+      return null
+    }
+
+    try {
+      const keyring = this.displayedKeyringToWalletKeyring(displayedKeyring, index, initName)
+      if (keyring.accounts.length === 0) {
+        return this.corruptedDisplayedKeyringToWalletKeyring(
+          displayedKeyring,
+          index,
+          'No account',
+          initName
+        )
+      }
+      return keyring
+    } catch (e) {
+      log.warn('[WalletController] Marking invalid keyring as corrupted', {
+        index,
+        type: displayedKeyring.type,
+        error: e,
+      })
+      return this.corruptedDisplayedKeyringToWalletKeyring(
+        displayedKeyring,
+        index,
+        'Invalid Public Key',
+        initName
+      )
+    }
+  }
+
+  isUsableKeyring = (keyring: WalletKeyringWithStatus | null): keyring is WalletKeyring => {
+    return Boolean(keyring && !('isCorrupted' in keyring && keyring.isCorrupted))
+  }
+
+  getKeyrings = async (): Promise<WalletKeyringWithStatus[]> => {
     const displayedKeyrings = await keyringService.getAllDisplayedKeyrings()
     const keyrings: WalletKeyring[] = []
     for (let index = 0; index < displayedKeyrings.length; index++) {
       const displayedKeyring = displayedKeyrings[index]!
       if (displayedKeyring.type !== KeyringType.Empty) {
-        const keyring = this.displayedKeyringToWalletKeyring(
+        const keyring = this.safeDisplayedKeyringToWalletKeyring(
           displayedKeyring,
           displayedKeyring.index
         )
-        keyrings.push(keyring)
+        if (keyring) {
+          keyrings.push(keyring)
+        }
       }
     }
 
@@ -1705,22 +1920,29 @@ export class WalletController extends BaseController {
       }
     }
 
-    if (
-      !displayedKeyrings[currentKeyringIndex] ||
-      displayedKeyrings[currentKeyringIndex]!.type === KeyringType.Empty ||
-      !displayedKeyrings[currentKeyringIndex]!.accounts[0]
-    ) {
+    let currentKeyring = this.safeDisplayedKeyringToWalletKeyring(
+      displayedKeyrings[currentKeyringIndex]!,
+      currentKeyringIndex
+    )
+
+    if (!this.isUsableKeyring(currentKeyring)) {
       for (let i = 0; i < displayedKeyrings.length; i++) {
-        if (displayedKeyrings[i]!.type !== KeyringType.Empty) {
+        if (displayedKeyrings[i]!.type === KeyringType.Empty) {
+          continue
+        }
+
+        const fallbackKeyring = this.safeDisplayedKeyringToWalletKeyring(displayedKeyrings[i]!, i)
+        if (this.isUsableKeyring(fallbackKeyring)) {
           currentKeyringIndex = i
           preferenceService.setCurrentKeyringIndex(currentKeyringIndex)
+          preferenceService.setCurrentAccount(fallbackKeyring.accounts[0])
+          currentKeyring = fallbackKeyring
           break
         }
       }
     }
-    const displayedKeyring = displayedKeyrings[currentKeyringIndex]
-    if (!displayedKeyring) return null
-    return this.displayedKeyringToWalletKeyring(displayedKeyring, currentKeyringIndex)
+
+    return this.isUsableKeyring(currentKeyring) ? currentKeyring : null
   }
 
   getCurrentAccount = async () => {
@@ -1819,8 +2041,8 @@ export class WalletController extends BaseController {
     const data = permissionService.getConnectedSites()
     return data
   }
-  setRecentConnectedSites = (sites: ConnectedSite[]) => {
-    permissionService.setRecentConnectedSites(sites)
+  setRecentConnectedSites = async (sites: ConnectedSite[]) => {
+    await permissionService.setRecentConnectedSites(sites)
   }
   getRecentConnectedSites = (): ConnectedSite[] => {
     return permissionService.getRecentConnectedSites()
@@ -1848,8 +2070,8 @@ export class WalletController extends BaseController {
     const { origin } = sessionService.getSession(tabId) || {}
     return permissionService.getWithoutUpdate(origin!)
   }
-  setSite = (data: ConnectedSite) => {
-    permissionService.setSite(data)
+  setSite = async (data: ConnectedSite) => {
+    await permissionService.setSite(data)
     if (data.isConnected) {
       const network = this.getLegacyNetworkName()
       sessionService.broadcastEvent(
@@ -1861,21 +2083,21 @@ export class WalletController extends BaseController {
       )
     }
   }
-  updateConnectSite = (origin: string, data: ConnectedSite) => {
-    permissionService.updateConnectSite(origin, data, true)
+  updateConnectSite = async (origin: string, data: Partial<ConnectedSite>) => {
+    await permissionService.updateConnectSite(origin, data, true)
     const network = this.getLegacyNetworkName()
     sessionService.broadcastEvent(
       SESSION_EVENTS.networkChanged,
       {
         network,
       },
-      data.origin
+      origin
     )
   }
 
-  removeConnectedSite = (origin: string) => {
+  removeConnectedSite = async (origin: string) => {
     sessionService.broadcastEvent(SESSION_EVENTS.accountsChanged, [], origin)
-    permissionService.removeConnectedSite(origin)
+    await permissionService.removeConnectedSite(origin)
   }
 
   setKeyringAlianName = (keyring: WalletKeyring, name: string) => {
@@ -1919,10 +2141,6 @@ export class WalletController extends BaseController {
 
   getRunesPrice = async (ticks: string[]) => {
     return walletApiService.market.getRunesPrice(ticks)
-  }
-
-  getCAT20sPrice = async (tokenIds: string[]) => {
-    return walletApiService.market.getCAT20sPrice(tokenIds)
   }
 
   getAlkanesPrice = async (alkaneids: string[]) => {
@@ -2336,14 +2554,6 @@ export class WalletController extends BaseController {
     }
   }
 
-  getEnableSignData = async () => {
-    return preferenceService.getEnableSignData()
-  }
-
-  setEnableSignData = async (enable: boolean) => {
-    return preferenceService.setEnableSignData(enable)
-  }
-
   getRunesList = async (address: string, currentPage: number, pageSize: number) => {
     const cursor = (currentPage - 1) * pageSize
     const size = pageSize
@@ -2392,6 +2602,7 @@ export class WalletController extends BaseController {
     btcUtxos,
     assetUtxos,
     outputValue,
+    enableRBF = true,
   }: {
     to: string
     runeid: string
@@ -2400,6 +2611,7 @@ export class WalletController extends BaseController {
     btcUtxos?: UnspentOutput[]
     assetUtxos?: UnspentOutput[]
     outputValue?: number
+    enableRBF?: boolean
   }): Promise<ToSignData> => {
     runeAmount = paramsUtils.formatAmount(runeAmount)
     if (runeAmount === '0') {
@@ -2408,6 +2620,7 @@ export class WalletController extends BaseController {
 
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
     const networkType = this.getNetworkType()
 
@@ -2480,6 +2693,7 @@ export class WalletController extends BaseController {
       runeid,
       runeAmount,
       outputValue: outputValue || UTXO_DUST,
+      enableRBF,
     })
 
     const toSignData = await this.getToSignData({
@@ -2617,150 +2831,13 @@ export class WalletController extends BaseController {
     }, timeConfig.time)
   }
 
-  getCAT20List = async (
-    version: CAT_VERSION,
-    address: string,
-    currentPage: number,
-    pageSize: number
-  ) => {
-    const cursor = (currentPage - 1) * pageSize
-    const size = pageSize
-    const { total, list } = await walletApiService.cat.getCAT20List(version, address, cursor, size)
-
-    return {
-      currentPage,
-      pageSize,
-      total,
-      list,
-    }
-  }
-
-  getAddressCAT20TokenSummary = async (version: CAT_VERSION, address: string, tokenId: string) => {
-    const tokenSummary = await walletApiService.cat.getAddressCAT20TokenSummary(
-      version,
-      address,
-      tokenId
-    )
-    return tokenSummary
-  }
-
-  getAddressCAT20UtxoSummary = async (version: CAT_VERSION, address: string, tokenId: string) => {
-    const tokenSummary = await walletApiService.cat.getAddressCAT20UtxoSummary(
-      version,
-      address,
-      tokenId
-    )
-    return tokenSummary
-  }
-
-  transferCAT20Step1ByMerge = async (version: CAT_VERSION, mergeId: string) => {
-    return await walletApiService.cat.transferCAT20Step1ByMerge(version, mergeId)
-  }
-
-  transferCAT20Step1 = async (
-    version: CAT_VERSION,
-    to: string,
-    tokenId: string,
-    tokenAmount: string,
-    feeRate: number
-  ) => {
-    tokenAmount = paramsUtils.formatAmount(tokenAmount)
-
-    const currentAccount = await this.getCurrentAccount()
-    if (!currentAccount) {
-      return
-    }
-
-    const _res = await walletApiService.cat.transferCAT20Step1(
-      version,
-      currentAccount.address,
-      currentAccount.pubkey,
-      to,
-      tokenId,
-      tokenAmount,
-      feeRate
-    )
-
-    const toSignData = await this.getToSignData({
-      psbtHex: bitcoin.Psbt.fromBase64(_res.commitTx).toHex(),
-      options: {
-        toSignInputs: _res.toSignInputs,
-        autoFinalized: false,
-      },
-      action: {
-        name: t('send_cat20'),
-        description: '',
-        type: PsbtActionType.CUSTOM,
-      },
-    })
-
-    return {
-      toSignData,
-      feeRate: _res.feeRate,
-      id: _res.id,
-    }
-  }
-
-  transferCAT20Step2 = async (version: CAT_VERSION, transferId: string, psbtHex: string) => {
-    const psbt = psbtFromString(psbtHex)
-    try {
-      psbt.finalizeAllInputs()
-    } catch (e) {
-      // skip
-    }
-    const psbtBase64 = psbt.toBase64()
-    const _res = await walletApiService.cat.transferCAT20Step2(version, transferId, psbtBase64)
-    const toSignData = await this.getToSignData({
-      psbtHex: bitcoin.Psbt.fromBase64(_res.revealTx).toHex(),
-      options: {
-        toSignInputs: _res.toSignInputs,
-        autoFinalized: false,
-      },
-    })
-
-    return {
-      toSignData,
-    }
-  }
-
-  transferCAT20Step3 = async (version: CAT_VERSION, transferId: string, psbtHex: string) => {
-    const psbt = psbtFromString(psbtHex)
-    const psbtBase64 = psbt.toBase64()
-    const _res = await walletApiService.cat.transferCAT20Step3(version, transferId, psbtBase64)
-    return {
-      txid: _res.txid,
-    }
-  }
-
-  mergeCAT20Prepare = async (
-    version: CAT_VERSION,
-    tokenId: string,
-    utxoCount: number,
-    feeRate: number
-  ) => {
-    const currentAccount = await this.getCurrentAccount()
-    if (!currentAccount) {
-      return
-    }
-
-    const _res = await walletApiService.cat.mergeCAT20Prepare(
-      version,
-      currentAccount.address,
-      currentAccount.pubkey,
-      tokenId,
-      utxoCount,
-      feeRate
-    )
-    return _res
-  }
-
-  getMergeCAT20Status = async (version: CAT_VERSION, mergeId: string) => {
-    const _res = await walletApiService.cat.getMergeCAT20Status(version, mergeId)
-    return _res
-  }
-
   getAppList = async () => {
     const data = await walletApiService.utility.getAppList()
+    return data
+  }
+
+  getAppExtra = async (id: string | number, locale?: string) => {
+    const data = await walletApiService.utility.getAppExtra(id, locale)
     return data
   }
 
@@ -2771,116 +2848,6 @@ export class WalletController extends BaseController {
 
   getBlockActiveInfo = () => {
     return walletApiService.utility.getBlockActiveInfo()
-  }
-
-  getCAT721List = async (
-    version: CAT_VERSION,
-    address: string,
-    currentPage: number,
-    pageSize: number
-  ) => {
-    const cursor = (currentPage - 1) * pageSize
-    const size = pageSize
-    const { total, list } = await walletApiService.cat.getCAT721CollectionList(
-      version,
-      address,
-      cursor,
-      size
-    )
-
-    return {
-      currentPage,
-      pageSize,
-      total,
-      list,
-    }
-  }
-
-  getAddressCAT721CollectionSummary = async (
-    version: CAT_VERSION,
-    address: string,
-    collectionId: string
-  ) => {
-    const collectionSummary = await walletApiService.cat.getAddressCAT721CollectionSummary(
-      version,
-      address,
-      collectionId
-    )
-    return collectionSummary
-  }
-
-  transferCAT721Step1 = async (
-    version: CAT_VERSION,
-    to: string,
-    collectionId: string,
-    localId: string,
-    feeRate: number
-  ) => {
-    const currentAccount = await this.getCurrentAccount()
-    if (!currentAccount) {
-      return
-    }
-
-    const _res = await walletApiService.cat.transferCAT721Step1(
-      version,
-      currentAccount.address,
-      currentAccount.pubkey,
-      to,
-      collectionId,
-      localId,
-      feeRate
-    )
-
-    const toSignData = await this.getToSignData({
-      psbtHex: bitcoin.Psbt.fromBase64(_res.commitTx).toHex(),
-      options: {
-        toSignInputs: _res.toSignInputs,
-        autoFinalized: false,
-      },
-      action: {
-        name: t('send_CAT721'),
-        description: '',
-        details: [],
-        type: PsbtActionType.CUSTOM,
-      },
-    })
-
-    return {
-      toSignData,
-      feeRate: _res.feeRate,
-      id: _res.id,
-    }
-  }
-
-  transferCAT721Step2 = async (version: CAT_VERSION, transferId: string, psbtHex: string) => {
-    const psbt = psbtFromString(psbtHex)
-    try {
-      psbt.finalizeAllInputs()
-    } catch (e) {
-      // skip
-    }
-    const psbtBase64 = psbt.toBase64()
-    const _res = await walletApiService.cat.transferCAT721Step2(version, transferId, psbtBase64)
-    const toSignData = await this.getToSignData({
-      psbtHex: bitcoin.Psbt.fromBase64(_res.revealTx).toHex(),
-      options: {
-        toSignInputs: _res.toSignInputs,
-        autoFinalized: false,
-      },
-    })
-
-    return {
-      toSignData,
-    }
-  }
-
-  transferCAT721Step3 = async (version: CAT_VERSION, transferId: string, psbtHex: string) => {
-    const psbt = psbtFromString(psbtHex)
-    const psbtBase64 = psbt.toBase64()
-    const _res = await walletApiService.cat.transferCAT721Step3(version, transferId, psbtBase64)
-    return {
-      txid: _res.txid,
-    }
   }
 
   getBuyCoinChannelList = async (coin: 'FB' | 'BTC') => {
@@ -2896,6 +2863,9 @@ export class WalletController extends BaseController {
   getCosmosKeyring = async (chainId: string) => {
     if (!this.cosmosChainInfoMap[chainId]) {
       throw new Error('Not supported chainId')
+    }
+    if (!keyringService.memStore.getState().isUnlocked) {
+      throw new Error(t('you_need_to_unlock_wallet_first'))
     }
 
     const currentAccount = await this.getCurrentAccount()
@@ -3129,6 +3099,10 @@ export class WalletController extends BaseController {
     amount: string
     feeRate: number
   }) => {
+    const account = preferenceService.getCurrentAccount()
+    if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
+
     params.amount = paramsUtils.formatAmount(params.amount)
 
     const result = await walletApiService.brc20.singleStepTransferBRC20Step1(params)
@@ -3182,17 +3156,20 @@ export class WalletController extends BaseController {
 
   createSendBTCOffsetPsbt = async (
     tos: { address: string; satoshis: number }[],
-    feeRate: number
+    feeRate: number,
+    enableRBF = true
   ): Promise<ToSignData> => {
     const currentAccount = await this.getCurrentAccount()
     if (!currentAccount) throw new Error('no current account')
+    assertCanCreateSigningRequest(currentAccount)
 
     const { psbtBase64, toSignInputs } =
       await walletApiService.bitcoin.createSendCoinBypassHeadOffsets(
         currentAccount.address,
         currentAccount.pubkey,
         tos,
-        feeRate
+        feeRate,
+        enableRBF
       )
 
     const psbt = bitcoin.Psbt.fromBase64(psbtBase64)
@@ -3227,14 +3204,20 @@ export class WalletController extends BaseController {
   getAssetUtxosAlkanes = async (alkaneid: string) => {
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
-    const runes_utxos = await walletApiService.alkanes.getAlkanesUtxos(account.address, alkaneid)
+    const alkanesUtxos = await walletApiService.alkanes.getAlkanesUtxos(account.address, alkaneid)
 
-    const assetUtxos = runes_utxos.map(v => {
+    const assetUtxos = alkanesUtxos.map(v => {
       return Object.assign(v, { pubkey: account.pubkey })
-    })
+    }) as unknown as UnspentOutput[]
 
     assetUtxos.forEach(v => {
       v.inscriptions = []
+    })
+
+    assetUtxos.sort((a, b) => {
+      const bAmount = b.alkanes?.find(v => v.alkaneid === alkaneid)?.amount || '0'
+      const aAmount = a.alkanes?.find(v => v.alkaneid === alkaneid)?.amount || '0'
+      return bnUtils.compareAmount(bAmount, aAmount) || 0
     })
 
     return assetUtxos
@@ -3259,32 +3242,66 @@ export class WalletController extends BaseController {
     amount,
     feeRate,
     type,
+    enableRBF = true,
   }: {
     to: string
     alkaneid: string
     amount: string
     feeRate: number
     type: 'ft' | 'nft'
+    enableRBF?: boolean
   }): Promise<ToSignData> => {
     amount = paramsUtils.formatAmount(amount)
+    if (amount === '0') {
+      throw new Error('Amount must be greater than 0')
+    }
 
     const account = preferenceService.getCurrentAccount()
     if (!account) throw new Error('no current account')
+    assertCanCreateSigningRequest(account)
 
-    const txData = await walletApiService.alkanes.createAlkanesSendTx({
-      userAddress: account.address,
-      userPubkey: account.pubkey,
-      receiver: to,
+    const assetUtxos = await this.getAssetUtxosAlkanes(alkaneid)
+    const selectedAssetUtxos: UnspentOutput[] = []
+    const amountToSend = BigInt(amount)
+
+    const exactUtxo = assetUtxos.find(utxo => {
+      const balance = utxo.alkanes?.find(alkane => alkane.alkaneid === alkaneid)
+      return balance && BigInt(balance.amount) === amountToSend && utxo.alkanes?.length === 1
+    })
+    if (exactUtxo) {
+      selectedAssetUtxos.push(exactUtxo)
+    } else {
+      let total = 0n
+      for (const utxo of assetUtxos) {
+        const balance = utxo.alkanes?.find(alkane => alkane.alkaneid === alkaneid)
+        if (!balance) continue
+
+        total += BigInt(balance.amount)
+        selectedAssetUtxos.push(utxo)
+        if (total >= amountToSend) break
+      }
+    }
+
+    const btcUtxos = await this.getBTCUtxos()
+    const { psbt, toSignInputs } = await txHelpers.sendAlkanes({
+      assetUtxos: selectedAssetUtxos,
+      assetAddress: account.address,
+      btcUtxos,
+      btcAddress: account.address,
+      toAddress: to,
+      networkType: this.getNetworkType(),
       alkaneid,
       amount,
+      outputValue: UTXO_DUST,
       feeRate,
+      enableRBF,
     })
 
     const toSignData = await this.getToSignData({
-      psbtHex: txData.psbtHex,
+      psbtHex: psbt.toHex(),
       options: {
-        toSignInputs: txData.toSignInputs,
-        autoFinalized: false,
+        toSignInputs: toSignInputs as any,
+        autoFinalized: true,
       },
       action: {
         name: t('send_alkanes'),
@@ -3441,11 +3458,24 @@ export class WalletController extends BaseController {
     preferenceService.setAcceptLowFeeMode(accept)
   }
 
+  getEnableRBF = async () => {
+    return preferenceService.getEnableRBF()
+  }
+
+  setEnableRBF = async (enableRBF: boolean) => {
+    preferenceService.setEnableRBF(enableRBF)
+  }
+
   createTmpKeyringWithPublicKey = async (publicKey: string, addressType: AddressType) => {
+    const networkType = this.getNetworkType()
+    if (!canDeriveAddressFromPublicKey(publicKey, addressType, networkType)) {
+      throw new Error('Invalid Public Key')
+    }
+
     const originKeyring = keyringService.createTmpKeyring(KeyringType.ReadonlyKeyring, [publicKey])
     const displayedKeyring = await keyringService.displayForKeyring(originKeyring, addressType, -1)
-    preferenceService.setShowSafeNotice(true)
-    return this.displayedKeyringToWalletKeyring(displayedKeyring, -1, false)
+    const tmpKeyring = this.displayedKeyringToWalletKeyring(displayedKeyring, -1, false)
+    return tmpKeyring
   }
 
   createKeyringWithPublicKey = async (
@@ -3454,6 +3484,10 @@ export class WalletController extends BaseController {
     alianName?: string
   ) => {
     let originKeyring: Keyring
+    const networkType = this.getNetworkType()
+    if (!canDeriveAddressFromPublicKey(data, addressType, networkType)) {
+      throw new Error('Invalid Public Key')
+    }
 
     try {
       originKeyring = await keyringService.importPublicKeyOnly(data, addressType as AddressType)
@@ -3471,6 +3505,8 @@ export class WalletController extends BaseController {
       keyringService.keyrings.length - 1
     )
     await this.changeKeyring(keyring)
+
+    preferenceService.setShowSafeNotice(true)
   }
 
   createTmpKeyringWithAddress = async (address: string) => {
@@ -3503,6 +3539,8 @@ export class WalletController extends BaseController {
       keyringService.keyrings.length - 1
     )
     await this.changeKeyring(keyring)
+
+    preferenceService.setShowSafeNotice(true)
   }
 
   createDummyPsbt = async ({

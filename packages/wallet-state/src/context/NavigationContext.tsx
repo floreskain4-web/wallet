@@ -3,10 +3,6 @@ import {
   AlkanesBalance,
   AlkanesInfo,
   BabylonTxInfo,
-  CAT20Balance,
-  CAT20TokenInfo,
-  CAT721CollectionInfo,
-  CAT_VERSION,
   Inscription,
   RuneBalance,
   RuneInfo,
@@ -53,6 +49,7 @@ export type RouteParamList = {
   }
   CreateSimpleWalletScreen: undefined
   CreateWatchWalletScreen: undefined
+  CreateReadonlyWalletScreen: undefined
   CreateColdWalletScreen: {
     fromUnlock?: boolean
   }
@@ -184,36 +181,6 @@ export type RouteParamList = {
     alkanesInfo: AlkanesInfo
   }
 
-  // CAT
-  CAT20TokenScreen: {
-    tokenId: string
-    version: CAT_VERSION
-  }
-  SendCAT20Screen: {
-    version: CAT_VERSION
-    cat20Balance: CAT20Balance
-    cat20Info: CAT20TokenInfo
-  }
-  MergeCAT20Screen: {
-    version: CAT_VERSION
-    cat20Balance: CAT20Balance
-    cat20Info: CAT20TokenInfo
-  }
-  CAT721CollectionScreen: {
-    collectionId: string
-    version: CAT_VERSION
-  }
-  CAT721NFTScreen: {
-    version: CAT_VERSION
-    collectionInfo: CAT721CollectionInfo
-    localId: string
-  }
-  SendCAT721Screen: {
-    version: CAT_VERSION
-    collectionInfo: CAT721CollectionInfo
-    localId: string
-  }
-
   // Babylon
   BabylonTxConfirmScreen: {
     txInfo: BabylonTxInfo
@@ -258,6 +225,7 @@ export interface NavigationContextType {
 
   navToExplorerTx: (txid: string) => void
   navToExplorerAddress: (address: string) => void
+  navToExplorerInscription: (inscriptionId: string) => void
 
   navToMarketPlace: () => void
   navToMarketPlaceBrc20: (ticker: string) => void
@@ -287,6 +255,7 @@ const initContext = {
   navToUrl: (url: string, externalBrowser?: boolean) => {},
   navToExplorerTx: (txid: string) => {},
   navToExplorerAddress: (address: string) => {},
+  navToExplorerInscription: (inscriptionId: string) => {},
 
   navToMarketPlace: () => {},
   navToMarketPlaceBrc20: (ticker: string) => {},

@@ -36,7 +36,7 @@ class UnlockManager {
 const unlockManager = new UnlockManager()
 
 const isSignApproval = (type: string) => {
-  const SIGN_APPROVALS = ['SignText', 'SignPsbt', 'SignTx', 'SignData']
+  const SIGN_APPROVALS = ['SignText', 'SignPsbt', 'SignTx']
   return SIGN_APPROVALS.includes(type)
 }
 const windowHeight = 600
@@ -95,7 +95,7 @@ const flowContext = flow
           },
           { height: windowHeight }
         )
-        permissionService.addConnectedSite(origin, name, icon, ChainType.BITCOIN_MAINNET)
+        await permissionService.addConnectedSite(origin, name, icon, ChainType.BITCOIN_MAINNET)
       }
     }
 
@@ -133,9 +133,9 @@ const flowContext = flow
         { height: windowHeight }
       )
       if (isSignApproval(approvalType)) {
-        permissionService.updateConnectSite(origin, { isSigned: true }, true)
+        await permissionService.updateConnectSite(origin, { isSigned: true }, true)
       } else {
-        permissionService.touchConnectedSite(origin)
+        await permissionService.touchConnectedSite(origin)
       }
     }
 

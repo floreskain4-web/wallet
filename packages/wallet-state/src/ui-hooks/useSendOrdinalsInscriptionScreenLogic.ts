@@ -1,15 +1,12 @@
 import { Inscription } from '@unisat/wallet-shared'
 import { useEffect, useMemo, useState } from 'react'
+import { useI18n, useNavigation, useTools, useWallet } from '../context'
 import {
   useFeeRateBar,
   useFetchUtxosCallback,
-  useI18n,
-  useNavigation,
   useOrdinalsTx,
   usePrepareSendOrdinalsInscriptionCallback,
-  useTools,
-  useWallet,
-} from '..'
+} from '../hooks'
 import { getAddressUtxoDust, isValidAddress } from '../utils/bitcoin-utils'
 
 export function useSendOrdinalsInscriptionScreenLogic() {
@@ -39,14 +36,26 @@ export function useSendOrdinalsInscriptionScreenLogic() {
   const defaultOutputValue = inscription ? inscription.outputValue : 10000
 
   const [outputValue, setOutputValue] = useState(defaultOutputValue)
+  const [enableRBF, setEnableRBF] = useState(true)
   const [inscriptions, setInscriptions] = useState<Inscription[]>([])
 
   const wallet = useWallet()
+  useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      setEnableRBF(enableRBF)
+    })
+  }, [wallet])
+
   useEffect(() => {
     wallet.getInscriptionUtxoDetail(inscription.inscriptionId).then(v => {
       setInscriptions(v.inscriptions)
     })
   }, [])
+
+  const onEnableRBFChange = (value: boolean) => {
+    setEnableRBF(value)
+    wallet.setEnableRBF(value)
+  }
 
   const minOutputValue = useMemo(() => {
     if (toInfo.address) {
@@ -110,6 +119,7 @@ export function useSendOrdinalsInscriptionScreenLogic() {
       inscriptionId: inscription.inscriptionId,
       feeRate,
       outputValue,
+      enableRBF,
     })
       .then(toSignData => {
         nav.navigate('TxConfirmScreen', { toSignData })
@@ -125,6 +135,8 @@ export function useSendOrdinalsInscriptionScreenLogic() {
     onAddressInputChange,
     toInfo,
     outputValue,
+    enableRBF,
+    setEnableRBF: onEnableRBFChange,
     minOutputValue,
     defaultOutputValue,
     setOutputValue,

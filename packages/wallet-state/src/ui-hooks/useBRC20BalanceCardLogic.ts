@@ -1,5 +1,5 @@
+import { bnUtils } from '@unisat/base-utils'
 import { AddressTokenSummary, TickPriceItem, TokenBalance } from '@unisat/wallet-shared'
-import BigNumber from 'bignumber.js'
 import { useMemo, useState } from 'react'
 import { useI18n } from 'src/context'
 import { useBRC20IconInfo, useChain, useCurrentAccount } from 'src/hooks'
@@ -64,11 +64,17 @@ export function useBRC20BalanceCardLogic(props: BRC20BalanceCardProps) {
   const inWalletBalance = overallBalance
 
   const totalBalance = useMemo(() => {
-    return new BigNumber(inWalletBalance)
-      .plus(new BigNumber(onSwapBalance || 0))
-      .plus(new BigNumber(onProgBalance || 0))
+    return bnUtils
+      .toBigNumber(inWalletBalance)
+      .plus(bnUtils.toBigNumber(onSwapBalance || '0'))
+      .plus(bnUtils.toBigNumber(onProgBalance || '0'))
       .toString()
   }, [inWalletBalance, onSwapBalance, onProgBalance])
+
+  const displayTotalBalance = bnUtils.toDisplayAmount(totalBalance)
+  const displayInWalletBalance = bnUtils.toDisplayAmount(inWalletBalance)
+  const displayOnSwapBalance = bnUtils.toDisplayAmount(onSwapBalance || '0')
+  const displayOnProgBalance = bnUtils.toDisplayAmount(onProgBalance || '0')
 
   let hasOutWalletBalance = false
   if (onSwapBalance && onSwapBalance !== '0') {
@@ -101,6 +107,12 @@ export function useBRC20BalanceCardLogic(props: BRC20BalanceCardProps) {
     onProgBalance,
     inWalletBalance,
     onSwapBalance,
+
+    // display balance
+    displayTotalBalance,
+    displayInWalletBalance,
+    displayOnSwapBalance,
+    displayOnProgBalance,
 
     // price
     price,

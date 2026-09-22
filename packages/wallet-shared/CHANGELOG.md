@@ -1,5 +1,23 @@
 # @unisat/wallet-shared
 
+## 0.6.0
+
+### Minor Changes
+
+- Improve safety
+
+## 0.5.0
+
+### Minor Changes
+
+- publish by extension/v1.7.17
+
+## 0.3.0
+
+### Minor Changes
+
+- release: minor wave for accumulated wallet toolkit updates since the previous package release.
+
 ## 0.2.0
 
 ### Minor Changes

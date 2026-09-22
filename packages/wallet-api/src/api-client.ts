@@ -15,13 +15,7 @@ export * from './types'
 
 // Export main client class
 import { BaseHttpClient } from './client/http-client'
-import {
-  CATService,
-  ConfigService,
-  MarketService,
-  NotificationService,
-  UtilityService,
-} from './services'
+import { ConfigService, MarketService, NotificationService, UtilityService } from './services'
 import { AlkanesService } from './services/alkanes'
 import { BitcoinService } from './services/bitcoin'
 import { BRC20Service } from './services/brc20'
@@ -38,7 +32,6 @@ export class UniSatApiClient {
   public readonly brc20: BRC20Service
   public readonly runes: RunesService
   public readonly alkanes: AlkanesService
-  public readonly cat: CATService
   public readonly market: MarketService
   public readonly domain: DomainService
   public readonly utility: UtilityService
@@ -56,7 +49,6 @@ export class UniSatApiClient {
     this.brc20 = new BRC20Service(this.httpClient)
     this.runes = new RunesService(this.httpClient)
     this.alkanes = new AlkanesService(this.httpClient)
-    this.cat = new CATService(this.httpClient)
     this.market = new MarketService(this.httpClient)
     this.domain = new DomainService(this.httpClient)
     this.utility = new UtilityService(this.httpClient)

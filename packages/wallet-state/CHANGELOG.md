@@ -1,5 +1,76 @@
 # @unisat/wallet-state
 
+## 1.6.0
+
+### Minor Changes
+
+- Improve safety
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/babylon-service@1.3.0
+  - @unisat/base-utils@0.5.0
+  - @unisat/keyring-service@1.3.0
+  - @unisat/wallet-shared@0.6.0
+
+## 1.5.0
+
+### Minor Changes
+
+- feat: add alkanes-lib
+
+## 1.4.0
+
+### Minor Changes
+
+- update number display
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/base-utils@0.4.0
+
+## 1.3.0
+
+### Minor Changes
+
+- publish by extension/v1.7.17
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/babylon-service@1.2.0
+  - @unisat/wallet-shared@0.5.0
+
+## 1.2.4
+
+- Update UI logics
+
+## 1.2.3
+
+### Patch Changes
+
+- Stabilize account balance refreshes by using the current account address as the hook dependency.
+
+## 1.2.1
+
+### Minor Changes
+
+- fix: stabilize ui callbacks
+
+## 1.2.0
+
+### Minor Changes
+
+- release: minor wave for accumulated wallet toolkit updates since the previous package release.
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/keyring-service@1.2.0
+  - @unisat/wallet-shared@0.3.0
+
 ## 1.1.0
 
 ### Minor Changes

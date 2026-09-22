@@ -12,11 +12,12 @@ export enum TabType {
   CHOOSE_ADDRESS_TYPE = 'CHOOSE_ADDRESS_TYPE',
 }
 
-function normalizeWhitespace(str: string) {
-  str = str.replace(/[\n\r\t]+/g, ' ')
-  str = str.replace(/\s+/g, ' ')
-  str = str.trim()
-  return str
+function normalizeWhitespace(value: string | undefined): string {
+  return (value ?? '')
+    .normalize('NFKD')
+    .replace(/[\n\r\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export interface ContextData {
@@ -103,8 +104,10 @@ export function useCreateWalletLogicImportWordsStep(params: CreateWalletLogicPar
 
   const [disabled, setDisabled] = useState(true)
 
-  const [inputWords, setInputWords] = useState<Array<string>>(
-    new Array(wordsItems[contextData.wordsType].count).fill('')
+  const selectedWordsItem =
+    wordsItems.find(item => item.key === contextData.wordsType) ?? wordsItems[0]!
+  const [inputWords, setInputWords] = useState<Array<string>>(() =>
+    new Array(selectedWordsItem.count).fill('')
   )
   const [inputWordsText, setInputWordsText] = useState('')
   const [inputWordsError, setInputWordsError] = useState(false)
@@ -120,7 +123,7 @@ export function useCreateWalletLogicImportWordsStep(params: CreateWalletLogicPar
 
   const enablePhrase = walletTypeConfig?.phraseSupport
 
-  const maxWordsCount = wordsItems[contextData.wordsType].count
+  const maxWordsCount = selectedWordsItem.count
 
   const initKey = async () => {
     let totalKeyringCount = 0
@@ -151,7 +154,7 @@ export function useCreateWalletLogicImportWordsStep(params: CreateWalletLogicPar
     }
 
     setDisabled(false)
-  }, [inputWordsText])
+  }, [inputWordsText, maxWordsCount])
 
   const updateWords = (words: Array<string>, isEndedWithSpace?: boolean) => {
     setInputWords(words)
@@ -192,7 +195,8 @@ export function useCreateWalletLogicImportWordsStep(params: CreateWalletLogicPar
   // extension
   const onHandleEventPaste = (event, index: number) => {
     const copyText = event.clipboardData?.getData('text/plain')
-    const textArr = normalizeWhitespace(copyText).split(' ')
+    const normalizedText = normalizeWhitespace(copyText)
+    const textArr = normalizedText ? normalizedText.split(' ') : []
     const newKeys = [...inputWords]
     if (textArr) {
       for (let i = 0; i < inputWords.length - index; i++) {
@@ -254,6 +258,10 @@ export function useCreateWalletLogicImportWordsStep(params: CreateWalletLogicPar
         // @ts-ignore SAFE
         dispatch(accountActions.setCurrent(keyring?.accounts[0]))
 
+        setInputWords(new Array(selectedWordsItem.count).fill(''))
+        setInputWordsText('')
+        setInputWordsError(false)
+        setEnteredWordsCount(0)
         nav.navToTab()
       } else {
         updateContextData({
@@ -273,6 +281,8 @@ export function useCreateWalletLogicImportWordsStep(params: CreateWalletLogicPar
     updateContextData({ wordsType: wordsItem.key })
     setInputWordsText('')
     setInputWords(new Array(wordsItem.count).fill(''))
+    setInputWordsError(false)
+    setEnteredWordsCount(0)
   }
 
   const shouldEnteredWordsCount = wordsItems[contextData.wordsType].count

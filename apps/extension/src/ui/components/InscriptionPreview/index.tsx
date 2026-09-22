@@ -127,6 +127,7 @@ export interface InscriptionProps {
   asLogo?: boolean;
   hideValue?: boolean;
   style?: CSSProperties;
+  infoBgColor?: string;
   'data-testid'?: string;
 }
 
@@ -136,6 +137,7 @@ export default function InscriptionPreview({
   preset,
   asLogo,
   hideValue,
+  infoBgColor,
   'data-testid': dataTestId
 }: InscriptionProps) {
   const [isVisible, setIsVisible] = useState(false);
@@ -263,14 +265,14 @@ export default function InscriptionPreview({
             px="md"
             py="sm"
             gap="zero"
-            bg="bg4"
             full
             style={{
               borderBottomRightRadius: 8,
               borderBottomLeftRadius: 8,
               width: '100%',
               marginTop: -1,
-              fontSize: 0
+              fontSize: 0,
+              backgroundColor: infoBgColor || colors.bg4
             }}>
             <Text text={numberStr} color="gold" size={$numberPresets[preset] as any} max1Lines />
             {isUnconfirmed == false && data.timestamp && (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Button, Column, Content, Header, Input, Layout } from '@/ui/components';
 import { useCurrentKeyring, useI18n, useSetCurrentAccountCallback, useTools, useWallet } from '@unisat/wallet-state';
+import { MAX_ALIAS_NAME_LENGTH } from '@unisat/wallet-shared';
 
 import { useNavigate } from '../MainRoute';
 
@@ -54,6 +55,7 @@ export default function CreateAccountScreen() {
             onKeyUp={(e) => handleOnKeyUp(e as any)}
             autoFocus={true}
             data-testid="create-account-name-input"
+            maxLength={MAX_ALIAS_NAME_LENGTH}
           />
           <Button
             text={t('create_an_account')}

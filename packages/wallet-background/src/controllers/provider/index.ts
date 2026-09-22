@@ -28,7 +28,7 @@ class ProviderController {
 
     const hasVault = keyringService.hasVault()
     if (!hasVault) {
-      throw new WalletError(ErrorCodes.UserCancel, 'wallet must has at least one account')
+      throw new WalletError(ErrorCodes.NO_ACCOUNT, 'wallet must has at least one account')
     }
     return rpcFlow(req)
   }

@@ -6,11 +6,10 @@ import { useCurrentAccount, useI18n } from '@unisat/wallet-state';
 
 import { DecodedPsbt } from '@unisat/wallet-shared';
 import { Column } from '../Column';
-import { Icon } from '../Icon';
 import InscriptionPreview from '../InscriptionPreview';
-import { Popover } from '../Popover';
 import { Row } from '../Row';
 import { Text } from '../Text';
+import { RiskDetailPopover, riskAssetCardStyle } from './RiskDetailPopover';
 
 export const SendingOutAssets = ({ decodedPsbt, onClose }: { decodedPsbt: DecodedPsbt; onClose: () => void }) => {
   const currentAccount = useCurrentAccount();
@@ -236,164 +235,133 @@ export const SendingOutAssets = ({ decodedPsbt, onClose }: { decodedPsbt: Decode
   });
 
   return (
-    <Popover>
-      <Column justifyCenter itemsCenter>
-        <Row fullX justifyBetween>
-          <Row />
-          <Text text={t('sending_out_assets')} preset="bold" />
-          <Icon
-            icon="close"
-            onClick={() => {
-              onClose();
+    <RiskDetailPopover title={t('sending_out_assets')} onClose={onClose}>
+      {inscriptions.length > 0 ? (
+        <Column fullX>
+          <Text text={`${t('inscriptions')}:`}></Text>
+          <Row
+            justifyBetween
+            fullX
+            px="md"
+            style={{
+              ...riskAssetCardStyle,
+              paddingTop: 12,
+              paddingBottom: 4
             }}
-          />
-        </Row>
-
-        <Row fullX style={{ borderBottomWidth: 1, borderColor: colors.border }} />
-        {inscriptions.length > 0 ? (
-          <Column fullX>
-            <Text text={`${t('inscriptions')}:`}></Text>
-            <Row
-              justifyBetween
-              fullX
-              px="md"
-              py="xl"
-              style={{
-                backgroundColor: '#1e1a1e',
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: '#442326'
-              }}
-              overflowX>
-              {inscriptions.map((inscription, index) => {
-                return (
-                  <InscriptionPreview key={'inscription_sending_' + index} data={inscription.data} preset="small" />
-                );
-              })}
-            </Row>
-          </Column>
-        ) : null}
-
-        {arc20List.length > 0 ? (
-          <Column fullX>
-            <Text text={`${t('arc20')}:`} mt="md"></Text>
-            {arc20List.map((burn, index) => {
+            overflowX>
+            {inscriptions.map((inscription, index) => {
               return (
-                <Row
-                  key={'arc20_sending_' + index}
-                  justifyBetween
-                  fullX
-                  px="md"
-                  py="xl"
-                  style={{
-                    backgroundColor: '#1e1a1e',
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: '#442326'
-                  }}>
-                  <Row>
-                    <Text text={burn.ticker} />
-                  </Row>
-
-                  <Text text={burn.amount} />
-                </Row>
+                <InscriptionPreview
+                  key={'inscription_sending_' + index}
+                  data={inscription.data}
+                  preset="small"
+                  infoBgColor="#292929"
+                />
               );
             })}
-          </Column>
-        ) : null}
+          </Row>
+        </Column>
+      ) : null}
 
-        {brc20List.length > 0 ? (
-          <Column fullX>
-            <Text text={'brc20:'} mt="md"></Text>
-            {brc20List.map((burn, index) => {
-              return (
-                <Row
-                  key={'brc20_sending_' + index}
-                  justifyBetween
-                  fullX
-                  px="md"
-                  py="xl"
-                  style={{
-                    backgroundColor: '#1e1a1e',
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: '#442326'
-                  }}>
-                  <Row>
-                    <Text text={burn.ticker} />
-                  </Row>
-
-                  <Text text={burn.amount} />
+      {arc20List.length > 0 ? (
+        <Column fullX style={{ marginTop: 12 }}>
+          <Text text={`${t('arc20')}:`}></Text>
+          {arc20List.map((burn, index) => {
+            return (
+              <Row
+                key={'arc20_sending_' + index}
+                justifyBetween
+                fullX
+                px="md"
+                py="xl"
+                style={riskAssetCardStyle}>
+                <Row>
+                  <Text text={burn.ticker} />
                 </Row>
-              );
-            })}
-          </Column>
-        ) : null}
 
-        {runesList.length > 0 ? (
-          <Column fullX>
-            <Text text={`${t('runes')}:`} mt="md"></Text>
-            {runesList.map((runeItem, index) => {
-              return (
-                <Row
-                  key={'runes_sending_' + index}
-                  justifyBetween
-                  fullX
-                  px="md"
-                  py="xl"
-                  style={{
-                    backgroundColor: '#1e1a1e',
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: '#442326'
-                  }}>
-                  <Row>
-                    <Text text={runeItem.rune.spacedRune || runeItem.rune.rune} />
-                    {runeItem.rune.symbol && <Text text={` (${runeItem.rune.symbol})`} />}
-                  </Row>
+                <Text text={burn.amount} />
+              </Row>
+            );
+          })}
+        </Column>
+      ) : null}
 
-                  <Text
-                    text={new BigNumber(runeItem.amount).div(Math.pow(10, runeItem.rune.divisibility)).toString()}
-                  />
+      {brc20List.length > 0 ? (
+        <Column fullX style={{ marginTop: 12 }}>
+          <Text text={'brc20:'}></Text>
+          {brc20List.map((burn, index) => {
+            return (
+              <Row
+                key={'brc20_sending_' + index}
+                justifyBetween
+                fullX
+                px="md"
+                py="xl"
+                style={riskAssetCardStyle}>
+                <Row>
+                  <Text text={burn.ticker} />
                 </Row>
-              );
-            })}
-          </Column>
-        ) : null}
 
-        {alkanesList.length > 0 ? (
-          <Column fullX>
-            <Text text={'Alkanes:'} mt="md"></Text>
-            {alkanesList.map((alkaneItem, index) => {
-              return (
-                <Row
-                  key={'alkanes_sending_' + index}
-                  justifyBetween
-                  fullX
-                  px="md"
-                  py="xl"
-                  style={{
-                    backgroundColor: '#1e1a1e',
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: '#442326'
-                  }}>
-                  <Row>
-                    <Text text={alkaneItem.alkane.name || alkaneItem.alkane.symbol} />
-                    {alkaneItem.alkane.symbol && alkaneItem.alkane.name !== alkaneItem.alkane.symbol && (
-                      <Text text={` (${alkaneItem.alkane.symbol})`} />
-                    )}
-                  </Row>
+                <Text text={burn.amount} />
+              </Row>
+            );
+          })}
+        </Column>
+      ) : null}
 
-                  <Text
-                    text={new BigNumber(alkaneItem.amount).div(Math.pow(10, alkaneItem.alkane.divisibility)).toString()}
-                  />
+      {runesList.length > 0 ? (
+        <Column fullX style={{ marginTop: 12 }}>
+          <Text text={`${t('runes')}:`}></Text>
+          {runesList.map((runeItem, index) => {
+            return (
+              <Row
+                key={'runes_sending_' + index}
+                justifyBetween
+                fullX
+                px="md"
+                py="xl"
+                style={riskAssetCardStyle}>
+                <Row>
+                  <Text text={runeItem.rune.spacedRune || runeItem.rune.rune} />
+                  {runeItem.rune.symbol && <Text text={` (${runeItem.rune.symbol})`} />}
                 </Row>
-              );
-            })}
-          </Column>
-        ) : null}
-      </Column>
-    </Popover>
+
+                <Text
+                  text={new BigNumber(runeItem.amount).div(Math.pow(10, runeItem.rune.divisibility)).toString()}
+                />
+              </Row>
+            );
+          })}
+        </Column>
+      ) : null}
+
+      {alkanesList.length > 0 ? (
+        <Column fullX style={{ marginTop: 12 }}>
+          <Text text={'Alkanes:'}></Text>
+          {alkanesList.map((alkaneItem, index) => {
+            return (
+              <Row
+                key={'alkanes_sending_' + index}
+                justifyBetween
+                fullX
+                px="md"
+                py="xl"
+                style={riskAssetCardStyle}>
+                <Row>
+                  <Text text={alkaneItem.alkane.name || alkaneItem.alkane.symbol} />
+                  {alkaneItem.alkane.symbol && alkaneItem.alkane.name !== alkaneItem.alkane.symbol && (
+                    <Text text={` (${alkaneItem.alkane.symbol})`} />
+                  )}
+                </Row>
+
+                <Text
+                  text={new BigNumber(alkaneItem.amount).div(Math.pow(10, alkaneItem.alkane.divisibility)).toString()}
+                />
+              </Row>
+            );
+          })}
+        </Column>
+      ) : null}
+    </RiskDetailPopover>
   );
 };

@@ -37,6 +37,37 @@ const KEYRING_SDK_TYPES = {
   WatchAddressKeyring,
 }
 
+const MAX_HD_ACCOUNT_COUNT = 100
+
+/** Normalize BIP-39 input before validation and persistence. */
+export function normalizeMnemonic(mnemonic: string): string {
+  if (typeof mnemonic !== 'string') {
+    return ''
+  }
+
+  return mnemonic.normalize('NFKD').trim().split(/\s+/).filter(Boolean).join(' ')
+}
+
+function isValidHdPath(hdPath: string): boolean {
+  if (typeof hdPath !== 'string') {
+    return false
+  }
+
+  const parts = hdPath.split('/')
+  if (parts[0] !== 'm' || parts.length < 2) {
+    return false
+  }
+
+  return parts.slice(1).every(part => {
+    const match = /^(\d+)'?$/.exec(part)
+    if (!match) {
+      return false
+    }
+    const index = Number(match[1])
+    return Number.isSafeInteger(index) && index >= 0 && index < 0x80000000
+  })
+}
+
 /**
  * Simple Mutex Lock for managing concurrent operations
  * Ensures only one operation can proceed at a time
@@ -248,6 +279,7 @@ export class KeyringService extends EventEmitter {
       addressTypes: [],
     })
 
+    this._clearKeyringSecrets()
     this.keyrings = []
     this.addressTypes = []
     this.cachedDisplayedKeyring = null
@@ -313,9 +345,13 @@ export class KeyringService extends EventEmitter {
    * @param  privateKey - The privateKey to generate address
    * @returns  A Promise that resolves to the state.
    */
-  importPrivateKey = async (privateKey: string, addressType: AddressType) => {
+  importPrivateKey = async (privateKey: string, addressType: AddressType, compressed?: boolean) => {
     // await this.persistAllKeyrings();
-    const keyring = await this.addNewKeyring('Simple Key Pair', [privateKey], addressType)
+    const keyring = await this.addNewKeyring(
+      'Simple Key Pair',
+      [compressed === undefined ? privateKey : { privateKey, compressed }],
+      addressType
+    )
     // await this.persistAllKeyrings();
     this.setUnlocked()
     this.fullUpdate()
@@ -338,15 +374,15 @@ export class KeyringService extends EventEmitter {
     return keyring
   }
 
-  generateMnemonic = (): string => {
-    return bip39.generateMnemonic(128)
+  generateMnemonic = (strength: 128 | 256 = 128): string => {
+    return bip39.generateMnemonic(strength)
   }
 
-  generatePreMnemonic = async (): Promise<string> => {
+  generatePreMnemonic = async (strength: 128 | 256 = 128): Promise<string> => {
     if (!this.password) {
       throw new Error(this.t('you_need_to_unlock_wallet_first'))
     }
-    const mnemonic = this.generateMnemonic()
+    const mnemonic = this.generateMnemonic(strength)
 
     const preMnemonics = await this.encryptor.encrypt(this.password, mnemonic)
     this.memStore.updateState({ preMnemonics })
@@ -396,11 +432,22 @@ export class KeyringService extends EventEmitter {
     accountCount: number,
     accountIndexDerivation = false
   ) => {
-    if (accountCount < 1) {
+    if (
+      !Number.isSafeInteger(accountCount) ||
+      accountCount < 1 ||
+      accountCount > MAX_HD_ACCOUNT_COUNT
+    ) {
       throw new Error(this.t('keyring_error_account_count'))
     }
-    if (!bip39.validateMnemonic(seed)) {
-      return Promise.reject(new Error(this.t('mnemonic_phrase_is_invalid')))
+    const mnemonic = normalizeMnemonic(seed)
+    if (!bip39.validateMnemonic(mnemonic)) {
+      throw new Error(this.t('mnemonic_phrase_is_invalid'))
+    }
+    if (!isValidHdPath(hdPath)) {
+      throw new Error(this.t('invalid_derivation_path'))
+    }
+    if (typeof passphrase !== 'string') {
+      throw new Error(this.t('mnemonic_phrase_is_invalid'))
     }
 
     // await this.persistAllKeyrings();
@@ -412,7 +459,7 @@ export class KeyringService extends EventEmitter {
     const keyring = await this.addNewKeyring(
       'HD Key Tree',
       {
-        mnemonic: seed,
+        mnemonic,
         activeIndexes,
         hdPath,
         passphrase,
@@ -428,6 +475,54 @@ export class KeyringService extends EventEmitter {
     this.setUnlocked()
     this.fullUpdate()
     return keyring
+  }
+
+  createKeyringWithPreMnemonic = async (
+    hdPath: string,
+    passphrase: string,
+    addressType: AddressType,
+    accountCount: number,
+    accountIndexDerivation = false
+  ) => {
+    const mnemonic = await this.getPreMnemonics()
+    return await this.createKeyringWithMnemonics(
+      mnemonic,
+      hdPath,
+      passphrase,
+      addressType,
+      accountCount,
+      accountIndexDerivation
+    )
+  }
+
+  createTmpKeyringWithPreMnemonic = async (
+    hdPath: string,
+    passphrase: string,
+    addressType: AddressType,
+    accountCount = 1,
+    accountIndexDerivation = false
+  ) => {
+    const mnemonic = normalizeMnemonic(await this.getPreMnemonics())
+    if (!bip39.validateMnemonic(mnemonic)) {
+      throw new Error(this.t('mnemonic_phrase_is_invalid'))
+    }
+    if (!isValidHdPath(hdPath)) {
+      throw new Error(this.t('invalid_derivation_path'))
+    }
+    if (typeof passphrase !== 'string') {
+      throw new Error(this.t('mnemonic_phrase_is_invalid'))
+    }
+    if (!Number.isSafeInteger(accountCount) || accountCount < 1 || accountCount > MAX_HD_ACCOUNT_COUNT) {
+      throw new Error(this.t('keyring_error_account_count'))
+    }
+
+    return this.createTmpKeyring('HD Key Tree', {
+      mnemonic,
+      activeIndexes: Array.from({ length: accountCount }, (_, index) => index),
+      hdPath,
+      passphrase,
+      accountIndexDerivation,
+    })
   }
 
   createKeyringWithKeystone = async (
@@ -510,6 +605,7 @@ export class KeyringService extends EventEmitter {
     this.memStore.updateState({ isUnlocked: false })
 
     // remove keyrings
+    this._clearKeyringSecrets()
     this.keyrings = []
     this.addressTypes = []
     this.cachedDisplayedKeyring = null
@@ -540,9 +636,15 @@ export class KeyringService extends EventEmitter {
       }
 
       this.password = password
+      await this.upgradeLegacyBootedIfNeeded(password)
 
       if (this.hasVault()) {
+        const shouldUpgradeVault = this.isLegacyEncryptedPayload(this.store.getState().vault)
         this.keyrings = await this.unlockKeyrings(password)
+        if (shouldUpgradeVault) {
+          await this.persistAllKeyrings()
+          this.logger.info('[KeyringService] Legacy vault payload upgraded to current KDF')
+        }
       }
 
       // Upgrade boost value if needed (on first unlock after initialization)
@@ -562,7 +664,7 @@ export class KeyringService extends EventEmitter {
         if (!isValidPassword) {
           throw new Error(this.t('password_error'))
         }
-        await this.unlockKeyrings(oldPassword)
+        await this.unlockKeyrings(oldPassword, true)
         this.password = newPassword
 
         const boostValue = this.getBoostValue()
@@ -590,6 +692,42 @@ export class KeyringService extends EventEmitter {
 
   private getBoostValue = (): string => {
     return this.store.getState().boostValue || this.initialBoostValue
+  }
+
+  /**
+   * Re-encrypt the legacy password verifier after its password has been validated.
+   * Legacy browser-passworder payloads have no KDF iteration metadata and use 10k rounds.
+   */
+  private upgradeLegacyBootedIfNeeded = async (password: string): Promise<void> => {
+    const booted = this.store.getState().booted
+
+    if (!this.isLegacyEncryptedPayload(booted)) {
+      return
+    }
+
+    const upgradedBooted = await this.encryptor.encrypt(password, this.getBoostValue())
+    this.store.updateState({ booted: upgradedBooted })
+    this.logger.info('[KeyringService] Legacy booted payload upgraded to current KDF')
+  }
+
+  private isLegacyEncryptedPayload = (encryptedData: string | null): boolean => {
+    if (!encryptedData) {
+      return false
+    }
+
+    try {
+      const payload = JSON.parse(encryptedData)
+      return (
+        payload &&
+        typeof payload === 'object' &&
+        typeof payload.data === 'string' &&
+        typeof payload.iv === 'string' &&
+        typeof payload.salt === 'string' &&
+        typeof payload.iterations !== 'number'
+      )
+    } catch {
+      return false
+    }
   }
 
   /**
@@ -757,6 +895,7 @@ export class KeyringService extends EventEmitter {
   }
 
   removeKeyring = async (keyringIndex: number): Promise<any> => {
+    this._clearKeyringSecret(this.keyrings[keyringIndex])
     delete this.keyrings[keyringIndex]
     this.keyrings[keyringIndex] = new EmptyKeyring()
     this.cachedDisplayedKeyring = null
@@ -820,11 +959,11 @@ export class KeyringService extends EventEmitter {
    * @param {string} password - The keyring controller password.
    * @returns {Promise<boolean>} Resolves to true once keyrings are persisted.
    */
-  persistAllKeyrings = (): Promise<boolean> => {
+  persistAllKeyrings = async (): Promise<boolean> => {
     if (!this.password || typeof this.password !== 'string') {
-      return Promise.reject(new Error(this.t('keyringcontroller_password_is_not_a_string')))
+      throw new Error(this.t('keyringcontroller_password_is_not_a_string'))
     }
-    return Promise.all(
+    const serializedKeyrings = await Promise.all(
       this.keyrings.map((keyring, index) => {
         return Promise.all([keyring.type, keyring.serialize()]).then(serializedKeyringArray => {
           // Label the output values on each serialized Keyring:
@@ -836,16 +975,15 @@ export class KeyringService extends EventEmitter {
         })
       })
     )
-      .then(serializedKeyrings => {
-        return this.encryptor.encrypt(
-          this.password as string,
-          serializedKeyrings as unknown as Buffer
-        )
-      })
-      .then(encryptedString => {
-        this.store.updateState({ vault: encryptedString })
-        return true
-      })
+
+    await this._restoreRecoveryDataForPersistence(serializedKeyrings)
+    const encryptedString = await this.encryptor.encrypt(
+      this.password,
+      serializedKeyrings as unknown as Buffer
+    )
+    this.store.updateState({ vault: encryptedString })
+    this._clearKeyringRecoveryData()
+    return true
   }
 
   /**
@@ -857,7 +995,7 @@ export class KeyringService extends EventEmitter {
    * @param {string} password - The keyring controller password.
    * @returns {Promise<Array<Keyring>>} The keyrings.
    */
-  unlockKeyrings = async (password: string): Promise<any[]> => {
+  unlockKeyrings = async (password: string, retainRecoveryData = false): Promise<any[]> => {
     const encryptedVault = this.store.getState().vault
     if (!encryptedVault) {
       throw new Error(this.t('cannot_unlock_without_a_previous_vault'))
@@ -875,6 +1013,9 @@ export class KeyringService extends EventEmitter {
     this.cachedDisplayedKeyring = null
 
     await this._updateMemStoreKeyrings()
+    if (!retainRecoveryData) {
+      this._clearKeyringRecoveryData()
+    }
     return this.keyrings
   }
 
@@ -1099,6 +1240,7 @@ export class KeyringService extends EventEmitter {
   clearKeyrings = async (): Promise<void> => {
     // clear keyrings from memory
 
+    this._clearKeyringSecrets()
     this.keyrings = []
     this.addressTypes = []
     this.cachedDisplayedKeyring = null
@@ -1106,6 +1248,89 @@ export class KeyringService extends EventEmitter {
     this.memStore.updateState({
       keyrings: [],
     })
+  }
+
+  private _clearKeyringSecrets = () => {
+    for (const keyring of this.keyrings) {
+      this._clearKeyringSecret(keyring)
+    }
+  }
+
+  private _clearKeyringRecoveryData = () => {
+    for (const keyring of this.keyrings) {
+      keyring?.clearRecoveryData?.()
+    }
+  }
+
+  private _restoreRecoveryDataForPersistence = async (serializedKeyrings: any[]) => {
+    const requiresRecoveryData = serializedKeyrings.some(
+      keyring =>
+        keyring.type === KeyringType.HdKeyring &&
+        !keyring.data?.mnemonic &&
+        !keyring.data?.xpriv
+    )
+    if (!requiresRecoveryData) {
+      return
+    }
+
+    const encryptedVault = this.store.getState().vault
+    if (!encryptedVault) {
+      throw new Error(this.t('cannot_unlock_without_a_previous_vault'))
+    }
+    const persistedKeyrings = await this.encryptor.decrypt(this.password!, encryptedVault)
+
+    for (let index = 0; index < serializedKeyrings.length; index++) {
+      const serializedKeyring = serializedKeyrings[index]
+      if (
+        serializedKeyring.type !== KeyringType.HdKeyring ||
+        serializedKeyring.data?.mnemonic ||
+        serializedKeyring.data?.xpriv
+      ) {
+        continue
+      }
+
+      const persistedKeyring = persistedKeyrings[index]
+      if (
+        persistedKeyring?.type !== KeyringType.HdKeyring ||
+        (!persistedKeyring.data?.mnemonic && !persistedKeyring.data?.xpriv)
+      ) {
+        throw new Error(this.t('cannot_unlock_without_a_previous_vault'))
+      }
+      serializedKeyring.data = {
+        ...serializedKeyring.data,
+        mnemonic: persistedKeyring.data.mnemonic || '',
+        xpriv: persistedKeyring.data.xpriv || '',
+        passphrase: persistedKeyring.data.passphrase || '',
+      }
+    }
+  }
+
+  getKeyringRecoveryData = async (keyringIndex: number) => {
+    if (!this.password) {
+      throw new Error(this.t('you_need_to_unlock_wallet_first'))
+    }
+    const encryptedVault = this.store.getState().vault
+    if (!encryptedVault) {
+      throw new Error(this.t('cannot_unlock_without_a_previous_vault'))
+    }
+    const persistedKeyrings = await this.encryptor.decrypt(this.password, encryptedVault)
+    const keyring = persistedKeyrings[keyringIndex]
+    if (keyring?.type !== KeyringType.HdKeyring) {
+      throw new Error(this.t('not_supported'))
+    }
+    return {
+      mnemonic: keyring.data.mnemonic || '',
+      hdPath: keyring.data.hdPath,
+      passphrase: keyring.data.passphrase || '',
+    }
+  }
+
+  private _clearKeyringSecret = (keyring: Keyring | undefined) => {
+    try {
+      keyring?.clearSensitiveData?.()
+    } catch (error) {
+      this.logger?.error?.('[KeyringService] Failed to clear keyring secrets', error)
+    }
   }
 
   /**

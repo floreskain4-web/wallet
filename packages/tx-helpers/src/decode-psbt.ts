@@ -2,9 +2,6 @@ import { bitcoin, toPsbtNetwork } from '@unisat/wallet-bitcoin'
 import { AlkanesBalance, Risk, RiskType, RuneBalance, ToSignData } from '@unisat/wallet-shared'
 import { NetworkType } from '@unisat/wallet-types'
 
-const CAT20_TRANSFER_SIG_SIZE = 5229
-const CAT20_GUARD_SIG_SIZE = 3650
-
 function isDangerousSighashType(sighashType?: number): boolean {
   if (typeof sighashType !== 'number') return false
   const outputType = sighashType & bitcoin.Transaction.SIGHASH_OUTPUT_MASK
@@ -57,7 +54,6 @@ export class PsbtDecoder {
   _inputInfos: InputInfo[] = []
   _outputInfos: OutputInfo[] = []
   _network: bitcoin.Network
-  _cat20: boolean = false
   _isCompleted: boolean = false
   _fee: number = 0
   _feeRateToCheck: number = 0
@@ -92,8 +88,6 @@ export class PsbtDecoder {
     this.checkSigHashTypes()
 
     this.initOutputs()
-
-    this.checkCAT20Tx()
 
     this.initInputs()
 
@@ -214,13 +208,7 @@ export class PsbtDecoder {
           sigSize += size * 0.25
         } else {
           if (witnessUtxo) {
-            if (this._cat20 && witnessUtxo.value == 330) {
-              // CAT20 transfer
-              sigSize += CAT20_TRANSFER_SIG_SIZE * 0.25
-            } else if (this._cat20 && witnessUtxo.value == 332) {
-              // cat20 guard
-              sigSize += CAT20_GUARD_SIG_SIZE * 0.25
-            } else if (address.indexOf('bc1p') == 0 || address.indexOf('tb1p') == 0) {
+            if (address.indexOf('bc1p') == 0 || address.indexOf('tb1p') == 0) {
               // P2TR
               sigSize += 65 * 0.25
             } else if (address.indexOf('3') == 0 || address.indexOf('2') == 0) {
@@ -351,15 +339,4 @@ export class PsbtDecoder {
     }
   }
 
-  checkCAT20Tx() {
-    if (this._opreturnDataString) {
-      if (this._opreturnDataString.indexOf('OP_RETURN 636174') == 0) {
-        this._cat20 = true
-      }
-
-      if (this._opreturnDataString.indexOf('OP_RETURN 63746d') == 0) {
-        this._cat20 = true
-      }
-    }
-  }
 }

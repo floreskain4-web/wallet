@@ -99,6 +99,8 @@ export const BRAND_ALIAN_TYPE_TEXT = {
   [KeyringType.WatchAddressKeyring]: 'Watch',
 }
 
+export const MAX_ALIAS_NAME_LENGTH = 20
+
 export const KEYRING_TYPES: {
   [key: string]: {
     name: string
@@ -542,7 +544,7 @@ export const TO_LOCALE_STRING_CONFIG = {
 
 export const SAFE_DOMAIN_CONFIRMATION = 3
 
-export const GITHUB_URL = 'https://github.com/unisat-wallet/extension'
+export const GITHUB_URL = 'https://github.com/unisat-wallet/wallet'
 export const DISCORD_URL = 'https://discord.com/invite/EMskB2sMz8'
 export const TWITTER_URL = 'https://twitter.com/unisat_wallet'
 export const TELEGRAM_URL = 'https://t.me/unisat_wallet'

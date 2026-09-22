@@ -131,6 +131,7 @@ export default function OrdinalsInscriptionScreen() {
               <Text
                 color="warning"
                 textCenter
+                size="xs"
                 text={`${t('this_inscription_carries_a_high_balance')}(>${HIGH_BALANCE} sats)`}
               />
             ))}

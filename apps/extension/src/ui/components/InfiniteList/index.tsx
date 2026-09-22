@@ -85,13 +85,13 @@ export function InfiniteList<T>({
           </Row>
         )}
 
-        <div style={{ width: '100%', padding: '0 4px' }}>
+        <div style={{ width: '100%' }}>
           {gridRows.map((row, rowIndex) => (
             <div
               key={`row-${rowIndex}`}
               style={{
                 width: '100%',
-                marginBottom: '12px',
+                marginBottom: '8px',
                 display: 'grid',
                 gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
                 gap: '8px'

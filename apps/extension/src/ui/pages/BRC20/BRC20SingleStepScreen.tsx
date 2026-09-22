@@ -1,7 +1,5 @@
-import { Button, Column, Content, Header, Input, Layout, Row, Text } from '@/ui/components';
+import { Button, Column, Content, Header, Input, Layout, Row, Text, TransferAmountCard, TransferAmountSection } from '@/ui/components';
 import { FeeRateBar } from '@/ui/components/FeeRateBar';
-import { TickUsdWithoutPrice, TokenType } from '@/ui/components/TickUsd';
-import { colors } from '@/ui/theme/colors';
 import { showLongNumber } from '@/ui/utils';
 import { BRC20SingleStepKey, useBRC20SingleStepScreenLogic } from '@unisat/wallet-state';
 
@@ -86,28 +84,19 @@ export default function BRC20SingleStepScreen() {
         </Column>
 
         <Column mt="lg">
-          <Row justifyBetween style={{ alignItems: 'flex-start' }}>
-            <Text text={t('balance')} color="textDim" />
-            <TickUsdWithoutPrice tick={tokenBalance.ticker} balance={inputAmount} type={TokenType.BRC20} />
-            <Row
-              style={{ alignItems: 'flex-start' }}
-              onClick={() => {
+          <TransferAmountSection>
+            <TransferAmountCard
+              amount={inputAmount.toString()}
+              onAmountChange={setInputAmount}
+              showMax
+              onMaxClick={() => {
                 setInputAmount(availableBalance);
-              }}>
-              <Text text={t('max')} color="textDim" size="sm" style={{ color: colors.white_muted }} />
-              <Text text={`${showLongNumber(availableBalance)} ${tokenBalance.ticker}`} preset="bold" size="sm" wrap />
-            </Row>
-          </Row>
-
-          <Input
-            preset="amount"
-            placeholder={t('amount')}
-            value={inputAmount.toString()}
-            onAmountInputChange={(amount) => {
-              setInputAmount(amount);
-            }}
-            runesDecimal={tokenInfo.decimal}
-          />
+              }}
+              availableAmount={showLongNumber(availableBalance)}
+              unit={tokenBalance.ticker}
+              runesDecimal={tokenInfo.decimal}
+            />
+          </TransferAmountSection>
         </Column>
 
         <Column mt="lg">

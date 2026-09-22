@@ -10,6 +10,8 @@ export interface CheckboxProps {
   checked?: boolean;
   onChange?: (e: any) => void;
   style?: React.CSSProperties;
+  checkedColor?: string;
+  checkColor?: string;
   disabled?: boolean;
   children?: React.ReactNode;
   className?: string;
@@ -17,7 +19,17 @@ export interface CheckboxProps {
 }
 
 export function Checkbox(props: CheckboxProps) {
-  const { checked = false, onChange, style, disabled = false, children, className, 'data-testid': dataTestId } = props;
+  const {
+    checked = false,
+    onChange,
+    style,
+    checkedColor = '#ffde04',
+    checkColor = '#141414ff',
+    disabled = false,
+    children,
+    className,
+    'data-testid': dataTestId
+  } = props;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
@@ -39,14 +51,16 @@ export function Checkbox(props: CheckboxProps) {
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.6 : 1,
         ...style
-      }}>
+      }}
+    >
       <div
         style={{
           position: 'relative',
           width: '15px',
           height: '15px',
           marginRight: '8px'
-        }}>
+        }}
+      >
         <input
           type="checkbox"
           checked={checked}
@@ -57,7 +71,7 @@ export function Checkbox(props: CheckboxProps) {
             appearance: 'none',
             width: '15px',
             height: '15px',
-            backgroundColor: checked ? '#ffde04' : 'rgba(0, 0, 0, 0)',
+            backgroundColor: checked ? checkedColor : 'rgba(0, 0, 0, 0)',
             border: '1px solid rgba(255, 255, 255, 0.5)',
             borderRadius: '2px',
             cursor: disabled ? 'not-allowed' : 'pointer',
@@ -74,7 +88,7 @@ export function Checkbox(props: CheckboxProps) {
               top: '50%',
               width: '9px',
               height: '5px',
-              border: '2px solid #141414ff',
+              border: `2px solid ${checkColor}`,
               borderTop: 'none',
               borderRight: 'none',
               transform: 'translate(-50%, -75%) rotate(-45deg)',

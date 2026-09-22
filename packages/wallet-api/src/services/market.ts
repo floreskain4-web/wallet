@@ -27,10 +27,6 @@ export class MarketService {
     return this.httpClient.post('/v5/market/runes/price', { ticks })
   }
 
-  async getCAT20sPrice(ticks: string[]): Promise<TickPriceItem> {
-    return this.httpClient.post('/v5/market/cat20/price', { ticks })
-  }
-
   async getAlkanesPrice(ticks: string[]): Promise<TickPriceItem> {
     return this.httpClient.post('/v5/market/alkanes/price', { ticks })
   }

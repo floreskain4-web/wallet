@@ -29,7 +29,7 @@
     "clean": "rm -rf lib coverage",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "yarn clean && yarn build"
+    "prepublishOnly": "pnpm clean && pnpm test && pnpm build"
   },
   "keywords": [
     "wallet",

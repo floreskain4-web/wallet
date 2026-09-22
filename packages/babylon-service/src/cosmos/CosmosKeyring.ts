@@ -24,7 +24,7 @@ import { Tendermint34Client } from '@cosmjs/tendermint-rpc'
 import { encodeSecp256k1Pubkey } from './utils'
 import { PubKeySecp256k1 } from './crypto'
 import type { Key, CosmosBalance, CosmosChainInfo } from '../types/cosmos'
-import { DEFAULT_BBN_GAS_PRICE } from 'types'
+import { DEFAULT_BBN_GAS_PRICE } from '../types'
 
 const REWARD_GAUGE_KEY_BTC_DELEGATION = 'btc_delegation'
 
@@ -160,6 +160,16 @@ export class CosmosKeyring {
       publicKey: encoding.toHex(this.key.pubKey),
       signature: encoding.toHex(signature),
     }
+  }
+
+  destroy() {
+    const signer = this.signer as any
+    signer?.privkey?.fill(0)
+    this.signer = undefined
+    this._signDoc_bodyBytes?.fill?.(0)
+    this._signDoc_authInfoBytes?.fill?.(0)
+    this._signDoc_bodyBytes = null
+    this._signDoc_authInfoBytes = null
   }
 
   /**

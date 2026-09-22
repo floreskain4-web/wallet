@@ -1,6 +1,6 @@
 import { Inscription, SignedData, SignPsbtParams, ToSignData } from '@unisat/wallet-shared'
 import { useEffect, useRef, useState } from 'react'
-import { useI18n, useNavigation, useTools } from 'src/context'
+import { useI18n, useNavigation, useTools, useWallet } from 'src/context'
 import {
   useCurrentAccount,
   useFeeRateBar,
@@ -33,12 +33,20 @@ export function useSendAlkanesNFTScreenLogic() {
   })
 
   const [error, setError] = useState('')
+  const [enableRBF, setEnableRBF] = useState(true)
 
   const currentAccount = useCurrentAccount()
 
   const tools = useTools()
+  const wallet = useWallet()
 
   const { feeRate } = useFeeRateBar()
+
+  useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      setEnableRBF(enableRBF)
+    })
+  }, [wallet])
 
   useEffect(() => {
     setError('')
@@ -71,7 +79,14 @@ export function useSendAlkanesNFTScreenLogic() {
   const onCreateTxHandleConfirm = async () => {
     tools.showLoading(true)
     try {
-      const toSignData = await prepareSendAlkanes(toInfo, alkanesInfo.alkaneid, '1', feeRate, 'nft')
+      const toSignData = await prepareSendAlkanes(
+        toInfo,
+        alkanesInfo.alkaneid,
+        '1',
+        feeRate,
+        'nft',
+        enableRBF
+      )
       if (toSignData) {
         transferData.current.toSignData = toSignData
         setStep(1)
@@ -118,14 +133,21 @@ export function useSendAlkanesNFTScreenLogic() {
     },
   }
 
+  const onEnableRBFChange = (value: boolean) => {
+    setEnableRBF(value)
+    wallet.setEnableRBF(value)
+  }
+
   return {
     step,
     t,
     alkanesInfo,
     toInfo,
+    enableRBF,
     disabled,
     error,
     setToInfo,
+    setEnableRBF: onEnableRBFChange,
 
     onCreateTxHandleConfirm,
     onCreateTxHandleBack,

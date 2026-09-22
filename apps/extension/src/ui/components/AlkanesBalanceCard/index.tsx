@@ -1,45 +1,35 @@
 import { AlkanesBalanceCardProps, useAlkanesBalanceCardLogic } from '@unisat/wallet-state';
 import { Card } from '../Card';
-import { Column } from '../Column';
 import { Row } from '../Row';
 import { RunesTicker } from '../RunesTicker';
 import { Text } from '../Text';
+import { getTokenBalanceCardStyle, TokenBalanceCardLayout } from '../TokenBalanceCardLayout';
 import { TokenBalanceIcon } from '../TokenBalanceIcon';
-import { TokenBalancePrice } from '../TokenBalancePrice';
 
 export default function AlkanesBalanceCard(props: AlkanesBalanceCardProps) {
   const { tokenBalance, onClick, showPrice, price, iconInfo, balance, balanceStr } = useAlkanesBalanceCardLogic(props);
 
   return (
     <Card
-      style={{
-        backgroundColor: '#1E1F24',
-        borderColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 12
-      }}
       fullX
       onClick={() => {
         onClick && onClick();
-      }}>
-      <Column full py="zero" gap="zero">
-        <Row fullY justifyBetween justifyCenter>
-          <Column onClick={onClick}>
-            <TokenBalanceIcon iconInfo={iconInfo} />
-          </Column>
-
-          <Column justifyCenter style={{ marginRight: 'auto' }} fullX gap="zero">
-            <RunesTicker tick={tokenBalance.name} />
-            <Row itemsCenter justifyBetween>
-              <Text text={tokenBalance.alkaneid} size="xs" color="white_muted" />
-              <Row itemsCenter fullY gap="zero">
-                <Text text={balanceStr} size="xs" />
-                <Text text={tokenBalance.symbol} size="xs" mx="sm" />
-              </Row>
-            </Row>
-          </Column>
-        </Row>
-        <TokenBalancePrice showPrice={showPrice} price={price} balance={balance.toString()} />
-      </Column>
+      }}
+      style={getTokenBalanceCardStyle()}>
+      <TokenBalanceCardLayout
+        icon={<TokenBalanceIcon iconInfo={iconInfo} />}
+        onIconClick={onClick}
+        title={<RunesTicker tick={tokenBalance.name} truncate />}
+        quantity={
+          <Row itemsCenter gap="zero">
+            <Text text={balanceStr} size="xs" />
+            <Text text={tokenBalance.symbol} size="xs" mx="sm" />
+          </Row>
+        }
+        showPrice={showPrice}
+        price={price}
+        balance={balance.toString()}
+      />
     </Card>
   );
 }

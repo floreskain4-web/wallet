@@ -12,6 +12,7 @@ import {
   useNavigation,
   usePrepareSendBTCCallback,
   useTools,
+  useWallet,
   useUiTxCreateScreen,
   useUpdateUiTxCreateScreen,
   useWalletConfig,
@@ -32,12 +33,14 @@ export function useTxCreateScreenLogic() {
 
   const toInfo = uiState.toInfo
   const inputAmount = uiState.inputAmount
+  const enableRBF = uiState.enableRBF
   const feeRate = feeRateBarState.feeRate
 
   const [error, setError] = useState('')
 
   const [autoAdjust, setAutoAdjust] = useState(false)
   const fetchUtxos = useFetchUtxosCallback()
+  const wallet = useWallet()
 
   const tools = useTools()
   useEffect(() => {
@@ -46,6 +49,12 @@ export function useTxCreateScreenLogic() {
       tools.showLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      setUiState({ enableRBF })
+    })
+  }, [wallet, setUiState])
 
   const prepareSendBTC = usePrepareSendBTCCallback()
 
@@ -118,8 +127,13 @@ export function useTxCreateScreenLogic() {
     setUiState({ inputAmount: availableAmount.toString() })
   }
 
+  const onRBFChange = (value: boolean) => {
+    setUiState({ enableRBF: value })
+    wallet.setEnableRBF(value)
+  }
+
   const onClickNext = () => {
-    prepareSendBTC({ toAddressInfo: toInfo, toAmount: toSatoshis, feeRate })
+    prepareSendBTC({ toAddressInfo: toInfo, toAmount: toSatoshis, feeRate, enableRBF })
       .then(toSignData => {
         nav.navigate('TxConfirmScreen', {
           toSignData,
@@ -142,6 +156,8 @@ export function useTxCreateScreenLogic() {
     inputAmount,
     onAmountInputChange,
     onAmountMaxClick,
+    enableRBF,
+    onRBFChange,
 
     showUnavailable,
     availableAmount,

@@ -1,4 +1,4 @@
-import { useChain } from '@unisat/wallet-state';
+import { CSSProperties, ReactNode } from 'react';
 
 import { Row } from '../Row';
 import { Text } from '../Text';
@@ -9,49 +9,79 @@ export interface AssetTagProps {
   fractal?: boolean;
 }
 
-const colors = {
-  'self-issuance': 'orange',
-  'bool-bridge': 'gray',
-  'simple-bridge': 'gray'
+const TAG_HEIGHT = 16;
+
+const tagContainerStyle: CSSProperties = {
+  height: TAG_HEIGHT,
+  boxSizing: 'border-box',
+  padding: '0 4px',
+  borderRadius: 4,
+  flexShrink: 0
 };
 
-export default function Tag(props: AssetTagProps) {
-  const { type, small } = props;
+const tagTextStyle: CSSProperties = {
+  fontSize: 10,
+  lineHeight: '12px'
+};
 
-  const chain = useChain();
-  const isFractal = chain.isFractal;
+const filledTagStyle: CSSProperties = {
+  backgroundColor: 'rgba(255,255,255,0.12)'
+};
+
+const filledTagTextStyle: CSSProperties = {
+  color: 'rgba(255, 255, 255, 0.55)',
+  ...tagTextStyle
+};
+
+const selfIssuanceTagStyle: CSSProperties = {
+  backgroundColor: 'rgba(255, 123, 33, 0.15)'
+};
+
+const selfIssuanceTagTextStyle: CSSProperties = {
+  color: 'rgba(255, 123, 33, 0.65)',
+  ...tagTextStyle
+};
+
+function TagContainer({
+  children,
+  style
+}: {
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <Row style={{ ...tagContainerStyle, ...style }} itemsCenter justifyCenter>
+      {children}
+    </Row>
+  );
+}
+
+function FilledTag({ text }: { text: string }) {
+  return (
+    <TagContainer style={filledTagStyle}>
+      <Text text={text} size="xxs" style={filledTagTextStyle} />
+    </TagContainer>
+  );
+}
+
+export default function Tag(props: AssetTagProps) {
+  const { type } = props;
 
   if (type === 'bool-bridge') {
+    return <FilledTag text="Bool Bridge" />;
+  }
+
+  if (type === 'simple-bridge') {
+    return <FilledTag text="Simple Bridge" />;
+  }
+
+  if (type === 'self-issuance') {
     return (
-      <Row style={{ padding: '2px 4px', borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.15)' }}>
-        <Text text={'Bool Bridge'} size={small ? 'xxs' : 'xs'} style={{ color: '#ddd' }} />
-      </Row>
-    );
-  } else if (type === 'simple-bridge') {
-    return (
-      <Row style={{ padding: '2px 4px', borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.15)' }}>
-        <Text text={'Simple Bridge'} size={small ? 'xxs' : 'xs'} style={{ color: '#ddd' }} />
-      </Row>
-    );
-  } else if (type === 'self-issuance' && !isFractal) {
-    return (
-      <Row
-        style={{ borderColor: colors[type], borderWidth: 1, borderRadius: small ? 4 : 5 }}
-        px={small ? 'sm' : 'md'}
-        py={small ? 'zero' : 'xs'}
-        itemsCenter>
-        <Text text="self-issuance" size={small ? 'xxs' : 'xs'} style={{ color: colors[type] }} />
-      </Row>
+      <TagContainer style={selfIssuanceTagStyle}>
+        <Text text="self-issuance" size="xxs" style={selfIssuanceTagTextStyle} />
+      </TagContainer>
     );
   }
 
-  return (
-    <Row
-      style={{ borderColor: colors[type], borderWidth: 1, borderRadius: small ? 4 : 5 }}
-      px={small ? 'sm' : 'md'}
-      py={small ? 'zero' : 'xs'}
-      itemsCenter>
-      <Text text={type} size={small ? 'xxs' : 'xs'} style={{ color: colors[type] }} />
-    </Row>
-  );
+  return <FilledTag text={type} />;
 }

@@ -27,6 +27,7 @@ export function useSplitOrdinalsInscriptionScreenLogic() {
   const account = useCurrentAccount()
   const minOutputValue = getAddressUtxoDust(account.address)
   const [outputValue, setOutputValue] = useState(defaultOutputValue)
+  const [enableRBF, setEnableRBF] = useState(true)
 
   const { feeRate } = useFeeRateBar()
 
@@ -35,10 +36,21 @@ export function useSplitOrdinalsInscriptionScreenLogic() {
   const [splitedCount, setSplitedCount] = useState(0)
   const wallet = useWallet()
   useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      setEnableRBF(enableRBF)
+    })
+  }, [wallet])
+
+  useEffect(() => {
     wallet.getInscriptionUtxoDetail(props.inscription.inscriptionId).then(v => {
       setInscriptions(v.inscriptions)
     })
   }, [])
+
+  const onEnableRBFChange = (value: boolean) => {
+    setEnableRBF(value)
+    wallet.setEnableRBF(value)
+  }
 
   useEffect(() => {
     setDisabled(true)
@@ -71,7 +83,7 @@ export function useSplitOrdinalsInscriptionScreenLogic() {
   }
 
   const onClickNext = () => {
-    createSplitTx({ inscriptionId: inscription.inscriptionId, feeRate, outputValue })
+    createSplitTx({ inscriptionId: inscription.inscriptionId, feeRate, outputValue, enableRBF })
       .then(toSignData => {
         nav.navigate('TxConfirmScreen', { toSignData })
       })
@@ -86,6 +98,8 @@ export function useSplitOrdinalsInscriptionScreenLogic() {
     inscriptions,
     minOutputValue,
     splitedCount,
+    enableRBF,
+    setEnableRBF: onEnableRBFChange,
     error,
     disabled,
     onOutputValueChange,

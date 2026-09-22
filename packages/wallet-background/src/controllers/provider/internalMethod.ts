@@ -1,4 +1,4 @@
-import { keyringService } from '../../services'
+import { keyringService, permissionService } from '../../services'
 
 import wallet from '../wallet'
 
@@ -28,7 +28,7 @@ const getProviderState = async req => {
 
   const isUnlocked = keyringService.memStore.getState().isUnlocked
   const accounts: string[] = []
-  if (isUnlocked) {
+  if (isUnlocked && permissionService.hasPermission(origin)) {
     const currentAccount = await wallet.getCurrentAccount()
     if (currentAccount) {
       accounts.push(currentAccount.address)

@@ -1,6 +1,8 @@
 import { Card, Column, Content, Header, Layout, Text } from '@/ui/components';
 import { useDeveloperMode, useDevice, useI18n, useNavigation } from '@unisat/wallet-state';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export default function AddKeyringScreen() {
   const nav = useNavigation();
   const { t } = useI18n();
@@ -69,6 +71,18 @@ export default function AddKeyringScreen() {
 
           {developerMode && (
             <>
+              <Text text={t('connect_to_readonly_wallet')} preset="regular-bold" mt="lg" />
+
+              <Card
+                justifyCenter
+                onClick={() => {
+                  nav.navigate('CreateReadonlyWalletScreen');
+                }}>
+                <Column full justifyCenter>
+                  <Text text={t('readonly_wallet')} size="sm" />
+                </Column>
+              </Card>
+
               <Text text={t('cold_wallet')} preset="regular-bold" mt="lg" />
 
               <Card
@@ -83,7 +97,7 @@ export default function AddKeyringScreen() {
             </>
           )}
 
-          {process.env.NODE_ENV === 'development' && (
+          {isDevelopment && (
             <>
               <Text text={t('watch_address_wallet')} preset="regular-bold" mt="lg" />
 

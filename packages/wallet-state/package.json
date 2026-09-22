@@ -1,6 +1,6 @@
 {
   "name": "@unisat/wallet-state",
-  "version": "1.1.0",
+  "version": "1.6.0",
   "description": "Redux state management for UniSat wallet, shared between platforms",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
@@ -28,7 +28,8 @@
     "build:esm": "tsup --format esm",
     "build:typed": "tsc --declaration --declarationMap --emitDeclarationOnly --outDir lib",
     "test": "vitest run",
-    "lint": "eslint src"
+    "lint": "eslint src --ext .ts,.js",
+    "prepublishOnly": "pnpm test && pnpm build"
   },
   "dependencies": {
     "@unisat/babylon-service": "workspace:*",

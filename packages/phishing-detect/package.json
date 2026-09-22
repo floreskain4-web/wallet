@@ -28,7 +28,8 @@
     "build:esm": "tsup --format esm",
     "build:typed": "tsc --declaration --declarationMap --emitDeclarationOnly --outDir lib",
     "test": "vitest run",
-    "lint": "eslint src"
+    "lint": "eslint src --ext .ts,.js",
+    "prepublishOnly": "pnpm test && pnpm build"
   },
   "dependencies": {
     "eventemitter3": "^5.0.1",

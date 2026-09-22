@@ -35,7 +35,6 @@ import {
 
 import { useNavigate } from '../../MainRoute';
 import { SwitchChainModal } from '../../Settings/SwitchChainModal';
-import { CATTab } from './CATTab';
 import { MoreActionSheet } from './MoreActionSheet';
 import { MoreTab } from './MoreTab';
 import { OrdinalsTab } from './OrdinalsTab';
@@ -160,13 +159,6 @@ export default function WalletTabScreen() {
           </Row>
         ),
         children: <MoreTab />
-      });
-    }
-    if (supportedAssets.assets.CAT20) {
-      items.push({
-        key: AssetTabKey.CAT,
-        label: t('cat'),
-        children: <CATTab />
       });
     }
     return items;

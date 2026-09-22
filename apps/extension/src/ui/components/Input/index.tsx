@@ -40,6 +40,9 @@ export interface InputProps {
   networkType?: ChainType;
   addressPlaceholder?: string;
   maxLength?: number;
+  autoComplete?: string;
+  spellCheck?: boolean;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
   enableStepper?: boolean;
   step?: number;
   min?: number;

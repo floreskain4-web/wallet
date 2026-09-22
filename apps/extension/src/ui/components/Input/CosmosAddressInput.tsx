@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 import { Text } from '@/ui/components';
 import { useI18n } from '@unisat/wallet-state';
 
+import { sendInputContainerStyle } from '../TransferAmountCard';
+
 import { isValidBech32Address } from '@/ui/utils';
 import { $baseContainerStyle, $baseInputStyle, InputProps } from '.';
 
 export const CosmosAddressInput = (props: InputProps) => {
-  const { placeholder, onAddressInputChange, addressInputData, style: $inputStyleOverride, ...rest } = props;
+  const { placeholder, onAddressInputChange, addressInputData, style: $inputStyleOverride, containerStyle, ...rest } = props;
   const { t } = useI18n();
   if (!addressInputData || !onAddressInputChange) {
     return <div />;
@@ -58,11 +60,24 @@ export const CosmosAddressInput = (props: InputProps) => {
 
   return (
     <div style={{ alignSelf: 'stretch' }}>
-      <div style={Object.assign({}, $baseContainerStyle, { flexDirection: 'column', minHeight: '56.5px' })}>
+      <div
+        style={Object.assign({}, $baseContainerStyle, sendInputContainerStyle, {
+          height: 56,
+          minHeight: 56,
+          paddingTop: 0,
+          paddingBottom: 0
+        }, containerStyle)}>
         <input
           placeholder={placeholder}
           type={'text'}
-          style={Object.assign({}, $baseInputStyle, $inputStyleOverride)}
+          style={Object.assign({}, $baseInputStyle, {
+            flex: 'none',
+            alignSelf: 'auto',
+            padding: 0,
+            height: 22,
+            lineHeight: '22px',
+            width: '100%'
+          }, $inputStyleOverride)}
           onChange={async (e) => {
             handleInputAddress(e);
           }}

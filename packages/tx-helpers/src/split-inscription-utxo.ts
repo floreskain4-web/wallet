@@ -12,6 +12,7 @@ export async function splitInscriptionUtxo({
   networkType,
   changeAddress,
   feeRate,
+  enableRBF = true,
   outputValue = 546,
 }: {
   btcUtxos: UnspentOutput[]
@@ -19,6 +20,7 @@ export async function splitInscriptionUtxo({
   networkType: NetworkType
   changeAddress: string
   feeRate: number
+  enableRBF?: boolean
   outputValue?: number
 }): Promise<{
   psbt: bitcoin.Psbt
@@ -29,7 +31,7 @@ export async function splitInscriptionUtxo({
     throw new WalletError(ErrorCodes.NOT_SAFE_UTXOS)
   }
 
-  const tx = createTx({ networkType, feeRate, changeAddress, enableRBF: true })
+  const tx = createTx({ networkType, feeRate, changeAddress, enableRBF })
 
   const toSignInputs: ToSignInput[] = []
 

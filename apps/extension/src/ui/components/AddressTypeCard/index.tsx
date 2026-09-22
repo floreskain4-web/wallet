@@ -20,18 +20,26 @@ interface AddressTypeCardProps {
   address: string;
   checked: boolean;
   assets: AddressAssets;
+  disabled?: boolean;
   onClick?: ReactEventHandler<HTMLDivElement>;
   'data-testid'?: string;
 }
 export function AddressTypeCard(props: AddressTypeCardProps) {
   const btcUnit = useBTCUnit();
-  const { onClick, label, address, checked, assets, 'data-testid': dataTestId } = props;
+  const { onClick, label, address, checked, assets, disabled = false, 'data-testid': dataTestId } = props;
   const hasVault = Boolean(assets.satoshis && assets.satoshis > 0);
   const { t } = useI18n();
 
   const chain = useChain();
   return (
-    <Card px="zero" py="zero" gap="zero" rounded onClick={onClick} data-testid={dataTestId}>
+    <Card
+      px="zero"
+      py="zero"
+      gap="zero"
+      rounded
+      onClick={disabled ? undefined : onClick}
+      data-testid={dataTestId}
+      style={{ opacity: disabled ? 0.5 : undefined, cursor: disabled ? 'not-allowed' : undefined }}>
       <Column full>
         <Row justifyBetween px="md" pt="md">
           <Column justifyCenter>

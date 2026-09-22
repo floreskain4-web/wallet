@@ -1,10 +1,10 @@
 import { Inscription } from '@unisat/wallet-shared';
-import { useI18n, useOrdinalsWebsite } from '@unisat/wallet-state';
+import { useI18n, useNavigation } from '@unisat/wallet-state';
 
 import { Text } from '../Text';
 
 export function AccordingInscription({ inscription }: { inscription: Inscription }) {
-  const ordinalsWebsite = useOrdinalsWebsite();
+  const nav = useNavigation();
   const { t } = useI18n();
   return (
     <Text
@@ -13,7 +13,7 @@ export function AccordingInscription({ inscription }: { inscription: Inscription
       }`}
       preset="link"
       onClick={() => {
-        window.open(`${ordinalsWebsite}/inscription/${inscription.inscriptionId}`);
+        nav.navToExplorerInscription(inscription.inscriptionId);
       }}
     />
   );

@@ -3,7 +3,7 @@
  */
 
 import type { BaseHttpClient } from '../client/http-client'
-import { Announcement, AppSummary } from '../types'
+import { Announcement, AppExtra, AppSummary } from '../types'
 
 export class UtilityService {
   constructor(private readonly httpClient: BaseHttpClient) {}
@@ -59,6 +59,18 @@ export class UtilityService {
     }[]
   > {
     return this.httpClient.get('/v5/discovery/app-list')
+  }
+
+  /**
+   * Get extra information for an application
+   */
+  async getAppExtra(id: string | number, locale?: string): Promise<AppExtra> {
+    return this.httpClient.get('/v5/discovery/app-extra', {
+      query: {
+        id,
+        ...(locale ? { locale } : {}),
+      },
+    })
   }
 
   /**

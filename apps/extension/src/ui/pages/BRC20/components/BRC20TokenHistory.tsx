@@ -1,6 +1,60 @@
-import { Column, Icon, Row, Text } from '@/ui/components';
+import { Column, Icon, Row, Text, Tooltip } from '@/ui/components';
 import { colors } from '@/ui/theme/colors';
+import { fontSizes } from '@/ui/theme/font';
+import { showLongNumber } from '@/ui/utils';
 import { useBRC20TokenHistoryLogic, useI18n, useNavigation } from '@unisat/wallet-state';
+
+const HISTORY_AMOUNT_MAX_LENGTH = 14;
+const HISTORY_AMOUNT_MAX_DECIMALS = 4;
+
+function getHistoryAmountDisplay(amount: string) {
+  const fullText = showLongNumber(amount, -1);
+  const normalized = fullText.replace(/,/g, '');
+
+  if (fullText.length <= HISTORY_AMOUNT_MAX_LENGTH) {
+    return { display: fullText, fullText, isTruncated: false };
+  }
+
+  if (normalized.includes('.')) {
+    const [integerPart, decimalPart] = normalized.split('.');
+    const integerDisplay = fullText.split('.')[0] ?? integerPart;
+
+    if (decimalPart.length > HISTORY_AMOUNT_MAX_DECIMALS) {
+      return {
+        display: `${integerDisplay}.${decimalPart.slice(0, HISTORY_AMOUNT_MAX_DECIMALS)}...`,
+        fullText,
+        isTruncated: true
+      };
+    }
+  }
+
+  return {
+    display: `${fullText.slice(0, HISTORY_AMOUNT_MAX_LENGTH)}...`,
+    fullText,
+    isTruncated: true
+  };
+}
+
+function HistoryAmount({ amount }: { amount: string }) {
+  const { display, fullText, isTruncated } = getHistoryAmountDisplay(amount);
+  const amountText = (
+    <Text text={display} ellipsis disableTranslate style={{ maxWidth: 140, textAlign: 'right' }} />
+  );
+
+  if (!isTruncated) {
+    return amountText;
+  }
+
+  return (
+    <Tooltip
+      title={fullText}
+      overlayStyle={{
+        fontSize: fontSizes.xs
+      }}>
+      {amountText}
+    </Tooltip>
+  );
+}
 
 export function BRC20TokenHistory(props: { ticker: string; displayName?: string }) {
   const { t } = useI18n();
@@ -46,15 +100,16 @@ export function BRC20TokenHistory(props: { ticker: string; displayName?: string 
                 justifyCenter
                 py="md"
                 style={{ borderBottomWidth: 1, borderColor: colors.border2 }}>
-                <Row itemsCenter>
+                <Row itemsCenter style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                   <Row
                     onClick={() => {
                       nav.navToExplorerTx(item.txid);
-                    }}>
+                    }}
+                    style={{ flexShrink: 0 }}>
                     <Icon icon={item.icon as any} size={32} />
                   </Row>
 
-                  <Column>
+                  <Column gap="xs" style={{ minWidth: 0 }}>
                     <Row style={{ alignItems: 'start' }}>
                       <Text text={item.mainTitle} />
 
@@ -65,16 +120,13 @@ export function BRC20TokenHistory(props: { ticker: string; displayName?: string 
                       ) : null}
                     </Row>
 
-                    <Row>
-                      <Text text={item.subTitle} preset="sub" />
-                    </Row>
+                    {item.subTitle ? <Text text={item.subTitle} preset="sub" /> : null}
                   </Column>
                 </Row>
 
                 {item.amount !== '0' ? (
-                  <Row itemsCenter>
-                    <Text text={item.amount} />
-                    <Text text={props.displayName || props.ticker} preset="sub" />
+                  <Row itemsCenter style={{ flexShrink: 0 }}>
+                    <HistoryAmount amount={item.amount} />
                   </Row>
                 ) : null}
               </Row>

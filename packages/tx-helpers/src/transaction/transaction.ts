@@ -6,6 +6,8 @@ import { utxoHelper } from './utxo'
 import {
   addressToScriptPk,
   bitcoin,
+  decodeAddress,
+  isPayToAnchorAddress,
   toPsbtNetwork,
   toXOnly,
   UTXO_DUST,
@@ -17,6 +19,7 @@ interface TxInput {
     hash: string
     index: number
     witnessUtxo?: { value: number; script: Buffer }
+    sequence?: number
     tapInternalKey?: Buffer
     nonWitnessUtxo?: Buffer
   }
@@ -193,7 +196,53 @@ export class Transaction {
     return fee
   }
 
+  calSendAllNetworkFee(toAddress: string) {
+    const hasWitnessInput = this.inputs.some(v => utxoHelper.hasWitness(v.utxo.addressType))
+    const inputSize = this.inputs.reduce(
+      (size, input) => size + utxoHelper.getAddedVirtualSize(input.utxo.addressType),
+      0
+    )
+    const outputSize = isPayToAnchorAddress(toAddress, this.networkType)
+      ? utxoHelper.getScriptOutputVirtualSize(addressToScriptPk(toAddress, this.networkType))
+      : utxoHelper.getOutputVirtualSize(decodeAddress(toAddress).addressType)
+    const txOverhead =
+      8 +
+      utxoHelper.getVarIntSize(this.inputs.length) +
+      utxoHelper.getVarIntSize(1) +
+      (hasWitnessInput ? 0.5 : 0)
+    return Math.ceil((txOverhead + inputSize + outputSize) * this.feeRate)
+  }
+
+  calNetworkFeeByEstimate() {
+    const hasWitnessInput = this.inputs.some(v => utxoHelper.hasWitness(v.utxo.addressType))
+    const inputSize = this.inputs.reduce(
+      (size, input) => size + utxoHelper.getAddedVirtualSize(input.utxo.addressType),
+      0
+    )
+    const outputSize = this.outputs.reduce((size, output) => {
+      if (output.address) {
+        return size + utxoHelper.getOutputVirtualSize(decodeAddress(output.address).addressType)
+      } else if (output.script) {
+        return size + utxoHelper.getScriptOutputVirtualSize(output.script)
+      }
+      return size
+    }, 0)
+    const txOverhead =
+      8 +
+      utxoHelper.getVarIntSize(this.inputs.length) +
+      utxoHelper.getVarIntSize(this.outputs.length) +
+      (hasWitnessInput ? 0.5 : 0)
+    return Math.ceil(
+      (txOverhead + inputSize + outputSize) * this.feeRate
+    )
+  }
+
   addOutput(address: string, value: number) {
+    if (isPayToAnchorAddress(address, this.networkType)) {
+      this.addScriptOutput(addressToScriptPk(address, this.networkType), value)
+      return
+    }
+
     this.outputs.push({
       address,
       value,
@@ -255,10 +304,8 @@ export class Transaction {
           psbt.__CACHE.__UNSAFE_SIGN_NONSEGWIT = true
         }
       }
-      psbt.data.addInput(v.data)
-      if (this.enableRBF) {
-        psbt.setInputSequence(index, 0xfffffffd)
-      }
+      const inputData = this.enableRBF ? { ...v.data, sequence: 0xfffffffd } : v.data
+      psbt.data.addInput(inputData)
     })
     this.outputs.forEach(v => {
       if (v.address) {
@@ -354,7 +401,7 @@ export class Transaction {
       this.addInput(dummyBtcUtxo)
       this.addChangeOutput(0)
 
-      const networkFee = await this.calNetworkFee()
+      const networkFee = forceAsFee ? this.calNetworkFeeByEstimate() : await this.calNetworkFee()
       const dummyBtcUtxoSize = utxoHelper.getAddedVirtualSize(dummyBtcUtxo.addressType)
       this._cacheNetworkFee = networkFee - dummyBtcUtxoSize * this.feeRate
 

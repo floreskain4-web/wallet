@@ -39,5 +39,9 @@ export interface UnspentOutput {
     amount: string
     spacedRune?: string
   }[]
+  alkanes?: {
+    alkaneid: string
+    amount: string
+  }[]
   rawtx?: string
 }

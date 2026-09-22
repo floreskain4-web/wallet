@@ -30,6 +30,7 @@ import { Switch } from './Switch';
 import { Text } from './Text';
 import { TextArea } from './TextArea';
 import { Tooltip } from './Tooltip';
+import { TransferAmountCard, TransferAmountSection, TransferAmountUnavailableRow } from './TransferAmountCard';
 import { ViewOnExplorerAction } from './ViewOnExplorerAction';
 
 export {
@@ -66,5 +67,8 @@ export {
   Text,
   TextArea,
   Tooltip,
+  TransferAmountCard,
+  TransferAmountSection,
+  TransferAmountUnavailableRow,
   ViewOnExplorerAction
 };

@@ -90,8 +90,8 @@ export interface WalletNotifier {
  * Wallet listener callbacks
  */
 export interface WalletListenerParams {
-  onAccountChange: () => void;
-  onNetworkChange: () => void;
+  onAccountChange: (...args: unknown[]) => void;
+  onNetworkChange: (...args: unknown[]) => void;
 }
 
 /**

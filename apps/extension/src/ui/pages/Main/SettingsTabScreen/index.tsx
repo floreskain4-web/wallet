@@ -3,6 +3,7 @@ import React from 'react';
 import { Button, Card, Column, Content, Footer, Header, Icon, Layout, Row, Text } from '@/ui/components';
 import { BaseView } from '@/ui/components/BaseView';
 import { NavTabBar } from '@/ui/components/NavTabBar';
+import { UnreadDot } from '@/ui/components/UnreadDot';
 import { SwitchNetworkBar } from '@/ui/components/SwitchNetworkBar';
 import { fontSizes } from '@/ui/theme/font';
 import { spacing } from '@/ui/theme/spacing';
@@ -136,20 +137,7 @@ export default function SettingsTabScreen() {
                   nav.navigate('NotificationListScreen');
                 }}
               />
-              {unreadNotificationCount ? (
-                <BaseView
-                  style={{
-                    position: 'absolute',
-                    top: 2,
-                    right: 2,
-                    width: 7,
-                    height: 7,
-                    backgroundColor: '#F55454',
-                    borderRadius: '50%',
-                    borderWidth: 1,
-                    borderColor: 'white'
-                  }}></BaseView>
-              ) : null}
+              {unreadNotificationCount ? <UnreadDot top={2} right={2} /> : null}
             </BaseView>
             <BaseView style={{ position: 'relative', marginRight: 5 }}>
               <Icon

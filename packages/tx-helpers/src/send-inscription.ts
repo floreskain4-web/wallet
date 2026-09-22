@@ -12,6 +12,7 @@ export async function sendInscription({
   networkType,
   changeAddress,
   feeRate,
+  enableRBF = true,
   outputValue,
   enableMixed = false,
 }: {
@@ -21,6 +22,7 @@ export async function sendInscription({
   networkType: NetworkType
   changeAddress: string
   feeRate: number
+  enableRBF?: boolean
   outputValue: number
   enableMixed?: boolean
 }): Promise<{
@@ -28,6 +30,10 @@ export async function sendInscription({
   toSignInputs: any[]
 }> {
   if (utxoHelper.hasAnyAssets(btcUtxos)) {
+    throw new WalletError(ErrorCodes.NOT_SAFE_UTXOS)
+  }
+
+  if (assetUtxo.runes?.length || assetUtxo.alkanes?.length) {
     throw new WalletError(ErrorCodes.NOT_SAFE_UTXOS)
   }
 
@@ -43,7 +49,7 @@ export async function sendInscription({
     throw new WalletError(ErrorCodes.ASSET_MAYBE_LOST)
   }
 
-  const tx = createTx({ networkType, feeRate, changeAddress, enableRBF: true })
+  const tx = createTx({ networkType, feeRate, changeAddress, enableRBF })
 
   tx.addInput(assetUtxo)
   tx.addOutput(toAddress, outputValue)

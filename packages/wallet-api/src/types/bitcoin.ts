@@ -3,6 +3,7 @@
  */
 
 import type { Inscription } from './inscriptions'
+import type { AlkanesBalance } from './alkanes'
 import { AddressType } from '@unisat/wallet-types'
 
 // ========================================
@@ -51,6 +52,7 @@ export interface UTXO {
     rune: string
     amount: string
   }[]
+  alkanes?: AlkanesBalance[]
 }
 
 export interface UTXO_Detail {

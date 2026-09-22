@@ -2,7 +2,7 @@ import { Button, Card, Column, Content, Header, Icon, Input, Layout, Row, Text }
 import { useExportPrivateKeyScreenLogic } from '@unisat/wallet-state';
 
 export default function ExportPrivateKeyScreen() {
-  const { t, setPassword, disabled, btnClick, handleOnKeyUp, privateKey, error, copy, onClickBack } =
+  const { t, password, setPassword, disabled, btnClick, handleOnKeyUp, privateKey, error, copy, onClickBack } =
     useExportPrivateKeyScreenLogic();
 
   return (
@@ -30,6 +30,7 @@ export default function ExportPrivateKeyScreen() {
             />
             <Input
               preset="password"
+              value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
               }}

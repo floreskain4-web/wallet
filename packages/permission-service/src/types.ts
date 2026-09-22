@@ -57,7 +57,6 @@ export interface PermissionServiceConfig {
   storageKey?: string
   logger?: Logger
   autoSync?: boolean
-  internalRequestOrigin?: string
 }
 
 /**

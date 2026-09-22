@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 import { fontSizes } from '@/ui/theme/font';
 import { useI18n } from '@unisat/wallet-state';
 
@@ -9,12 +7,9 @@ import { Row } from '../Row';
 import { Text } from '../Text';
 import { Tooltip } from '../Tooltip';
 
-export function RBFBar({ defaultValue, onChange }: { defaultValue?: boolean; onChange: (val: boolean) => void }) {
-  const [enableRBF, setEnableRBF] = useState(defaultValue || false);
+export function RBFBar({ value, onChange }: { value: boolean; onChange: (val: boolean) => void }) {
   const { t } = useI18n();
-  useEffect(() => {
-    onChange(enableRBF);
-  }, [enableRBF]);
+
   return (
     <Row justifyBetween>
       <Tooltip
@@ -24,16 +19,16 @@ export function RBFBar({ defaultValue, onChange }: { defaultValue?: boolean; onC
         }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Row itemsCenter>
-            <Text text="RBF" />
+            <Text text={t('rbf')} />
             <Icon icon="circle-question" color="textDim" />
           </Row>
         </div>
       </Tooltip>
       <Checkbox
         onChange={() => {
-          setEnableRBF(!enableRBF);
+          onChange(!value);
         }}
-        checked={enableRBF}></Checkbox>
+        checked={value}></Checkbox>
     </Row>
   );
 }

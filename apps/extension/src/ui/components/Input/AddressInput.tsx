@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Icon, Row, Text } from '@/ui/components';
-import { getAddressType, isValidAddress } from '@/ui/utils/bitcoin-utils';
+import { isValidAddress } from '@/ui/utils/bitcoin-utils';
 import { namesUtils } from '@unisat/base-utils';
 import { Inscription } from '@unisat/wallet-shared';
-import { CHAINS_MAP, SAFE_DOMAIN_CONFIRMATION } from '@unisat/wallet-shared';
+import { SAFE_DOMAIN_CONFIRMATION } from '@unisat/wallet-shared';
 import { useChain, useI18n, useWallet } from '@unisat/wallet-state';
-import { AddressType, ChainType } from '@unisat/wallet-types';
 
 import { $baseContainerStyle, $baseTextareaStyle, InputProps } from '.';
 import { AccordingInscription } from '../AccordingInscription';
 import { Column } from '../Column';
 import { ContactsModal } from '../ContactsModal';
 import { CopyableAddress } from '../CopyableAddress';
+import { sendInputContainerStyle } from '../TransferAmountCard';
 
 export const AddressInput = (props: InputProps) => {
   const { t } = useI18n();
@@ -23,6 +23,7 @@ export const AddressInput = (props: InputProps) => {
     style: $inputStyleOverride,
     networkType: propsNetworkType,
     recipientLabel,
+    containerStyle,
     ...rest
   } = props;
 
@@ -40,6 +41,24 @@ export const AddressInput = (props: InputProps) => {
   const [inputVal, setInputVal] = useState(addressInputData.domain || addressInputData.address || '');
   const [searching, setSearching] = useState(false);
   const [addressTip, setAddressTip] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isWrapped, setIsWrapped] = useState(false);
+
+  const syncTextareaHeight = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) {
+      return;
+    }
+
+    el.style.height = '22px';
+    const nextHeight = Math.max(22, el.scrollHeight);
+    el.style.height = `${nextHeight}px`;
+    setIsWrapped(nextHeight > 24);
+  }, []);
+
+  useEffect(() => {
+    syncTextareaHeight();
+  }, [inputVal, syncTextareaHeight]);
 
   const wallet = useWallet();
   const chain = useChain();
@@ -52,27 +71,6 @@ export const AddressInput = (props: InputProps) => {
     inputAddressPlaceholder = t('address_or_name_fb');
   }
 
-  function getAddressTips(address: string, chanEnum: ChainType) {
-    let ret = {
-      homeTip: '',
-      sendTip: ''
-    };
-    try {
-      const chain = CHAINS_MAP[chanEnum];
-      const addressType = getAddressType(address, chain.networkType);
-      if (chain.isFractal && addressType === AddressType.P2PKH) {
-        ret = {
-          homeTip: t('legacy_address_warning_3'),
-          sendTip: t('legacy_address_warning_4')
-        };
-      }
-    } catch (e) {
-      console.log(e);
-    }
-
-    return ret;
-  }
-
   useEffect(() => {
     onAddressInputChange({
       address: validAddress,
@@ -80,12 +78,7 @@ export const AddressInput = (props: InputProps) => {
       inscription
     });
 
-    const addressTips = getAddressTips(validAddress, chain.enum);
-    if (addressTips.sendTip) {
-      setAddressTip(addressTips.sendTip);
-    } else {
-      setAddressTip('');
-    }
+    setAddressTip('');
   }, [validAddress]);
 
   const resetState = () => {
@@ -143,9 +136,8 @@ export const AddressInput = (props: InputProps) => {
             setValidAddress(address);
             setParseName(true);
           })
-          .catch((err: Error) => {
-            const errMsg = err.message + ' for ' + inputAddress;
-            setFormatError(errMsg);
+          .catch(() => {
+            setParseError(`${inputAddress} ${t('does_not_exist')}`);
           })
           .finally(() => {
             setSearching(false);
@@ -172,9 +164,29 @@ export const AddressInput = (props: InputProps) => {
     if (inputAddress == '') return;
 
     if (!validAddress) {
+      const teststr = inputAddress.toLowerCase();
+      const satsname = namesUtils.getSatsName(teststr);
+      if (satsname && SUPPORTED_DOMAINS.includes(satsname.suffix)) {
+        return;
+      }
+      if (parseError || searching) {
+        return;
+      }
       setFormatError(t('recipient_address_is_invalid'));
     }
   };
+
+  const addressFieldStyle = Object.assign({}, $baseTextareaStyle, {
+    padding: 0,
+    margin: 0,
+    minHeight: 22,
+    lineHeight: '22px',
+    alignSelf: 'center',
+    flex: 'none',
+    width: '100%',
+    display: 'block',
+    boxSizing: 'border-box' as const
+  }, $inputStyleOverride);
 
   return (
     <div style={{ alignSelf: 'stretch' }}>
@@ -186,23 +198,38 @@ export const AddressInput = (props: InputProps) => {
         </Row>
       </Row>
       <div
-        style={Object.assign({}, $baseContainerStyle, {
+        style={Object.assign({}, $baseContainerStyle, sendInputContainerStyle, {
           flexDirection: 'column',
-          minHeight: '56.5px',
           paddingTop: 0,
           paddingBottom: 0
-        })}>
-        <Row full itemsCenter>
+        }, containerStyle)}>
+        <div
+          style={{
+            minHeight: 56,
+            display: 'flex',
+            alignItems: isWrapped ? 'flex-start' : 'center',
+            width: '100%',
+            paddingTop: isWrapped ? 8 : 0,
+            paddingBottom: isWrapped ? 8 : 0,
+            boxSizing: 'border-box'
+          }}>
           <textarea
+            ref={textareaRef}
             placeholder={inputAddressPlaceholder}
-            style={Object.assign({}, $baseTextareaStyle, $inputStyleOverride)}
-            onChange={handleInputAddress}
+            style={addressFieldStyle}
+            onChange={(e) => {
+              handleInputAddress(e);
+              requestAnimationFrame(syncTextareaHeight);
+            }}
             onBlur={onAddressBlur}
             value={inputVal}
-            rows={inputVal && inputVal.length > 50 ? 2 : 1}
+            rows={1}
+            autoCorrect="off"
+            autoComplete="off"
             {...rest}
+            spellCheck={false}
           />
-        </Row>
+        </div>
 
         {searching && (
           <Row full mt="sm">
@@ -218,7 +245,7 @@ export const AddressInput = (props: InputProps) => {
       </div>
 
       {parseName ? (
-        <Row mt="sm" gap="zero" itemsCenter>
+        <Row mt="md" gap="sm" itemsCenter>
           <Text preset="sub" size="sm" text={t('name_recognized_and_resolved')} />
           <Text
             preset="link"
@@ -228,10 +255,9 @@ export const AddressInput = (props: InputProps) => {
               window.open('https://docs.unisat.io/unisat-wallet/name-recognized-and-resolved');
             }}
           />
-          <Text preset="sub" size="sm" text={')'} />
         </Row>
       ) : null}
-      {parseError && <Text text={parseError} preset="regular" color="error" />}
+      {parseError && <Text text={parseError} preset="regular" color="error" mt="md" />}
       {addressTip && (
         <Column
           py={'lg'}
@@ -246,7 +272,7 @@ export const AddressInput = (props: InputProps) => {
           <Text text={addressTip} preset="regular" color="warning" />
         </Column>
       )}
-      <Text text={formatError} preset="regular" color="error" />
+      {formatError ? <Text text={formatError} preset="regular" color="error" mt="md" /> : null}
 
       {showContactsModal && (
         <ContactsModal
@@ -263,6 +289,7 @@ export const AddressInput = (props: InputProps) => {
             }
 
             setShowContactsModal(false);
+            requestAnimationFrame(syncTextareaHeight);
           }}
           selectedNetworkFilter={networkType}
         />

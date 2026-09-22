@@ -1,12 +1,15 @@
 /**
  * Deterministic context-based key derivation using HKDF (RFC 5869).
  *
- * ## Derivation scheme (spec v1.0, algorithm version 0)
+ * ## Derivation scheme (algorithm version 1)
  *
  * ```
  * ikm    = 32-byte private key (BIP-32 derived at m/73681862' or raw imported key)
  * salt   = "derive-context-hash"
- * info   = SHA-256(UTF8(appName)) || contextBytes
+ * info   = SHA-256(UTF8(appName))                  (32B)
+ *       || SHA-256(UTF8(canonicalNetworkName))     (32B)
+ *       || connectedPubkey                          (33B, compressed SEC1)
+ *       || contextBytes                             (variable)
  * output = HKDF-SHA-256(ikm, salt, info, 32)
  * ```
  *
@@ -18,6 +21,9 @@ import { sha256 } from '@noble/hashes/sha256'
 
 const SALT = 'derive-context-hash'
 const OUTPUT_LENGTH = 32
+const APP_NAME_HASH_LENGTH = 32
+const NETWORK_HASH_LENGTH = 32
+const COMPRESSED_PUBKEY_LENGTH = 33
 
 /**
  * Convert a Uint8Array to a hex string.
@@ -29,25 +35,44 @@ function toHex(bytes: Uint8Array): string {
 }
 
 /**
- * Derive a deterministic 32-byte value from key material, app name, and context.
+ * Derive a deterministic 32-byte value from key material, app name, network,
+ * connected public key, and context.
  *
- * @param ikm     - Input key material: 32-byte private key.
- * @param appName - Application identifier (1-64 bytes, [a-z0-9\-]).
- * @param context - Context bytes decoded from hex.
+ * @param ikm                  - Input key material: 32-byte private key.
+ * @param appName              - Application identifier (1-64 bytes, [a-z0-9\-]).
+ * @param canonicalNetworkName - One of `"bitcoin-mainnet" | "bitcoin-testnet" | "bitcoin-signet"`.
+ *                                Opaque to the helper — caller is responsible for passing a canonical value.
+ * @param connectedPubkey      - 33-byte compressed SEC1 public key (parity 0x02 or 0x03).
+ * @param context              - Context bytes decoded from hex.
  * @returns Hex-encoded 32-byte derived value.
  */
-export function deriveContextHash(ikm: Uint8Array, appName: string, context: Uint8Array): string {
+export function deriveContextHash(
+  ikm: Uint8Array,
+  appName: string,
+  canonicalNetworkName: string,
+  connectedPubkey: Uint8Array,
+  context: Uint8Array,
+): string {
   if (ikm.length !== 32) {
     throw new Error(`Input key material must be 32 bytes, got ${ikm.length}`)
   }
-
   validateAppName(appName)
 
-  // info = SHA-256(UTF8(appName)) || contextBytes
+  // info = SHA-256(appName) || SHA-256(network) || compressedPubkey || context
   const appNameHash = sha256(new TextEncoder().encode(appName))
-  const info = new Uint8Array(appNameHash.length + context.length)
-  info.set(appNameHash, 0)
-  info.set(context, appNameHash.length)
+  const networkHash = sha256(new TextEncoder().encode(canonicalNetworkName))
+
+  const info = new Uint8Array(
+    APP_NAME_HASH_LENGTH + NETWORK_HASH_LENGTH + COMPRESSED_PUBKEY_LENGTH + context.length,
+  )
+  let offset = 0
+  info.set(appNameHash, offset)
+  offset += APP_NAME_HASH_LENGTH
+  info.set(networkHash, offset)
+  offset += NETWORK_HASH_LENGTH
+  info.set(connectedPubkey, offset)
+  offset += COMPRESSED_PUBKEY_LENGTH
+  info.set(context, offset)
 
   const derived = hkdf(sha256, ikm, SALT, info, OUTPUT_LENGTH)
   const result = toHex(derived)
@@ -55,12 +80,14 @@ export function deriveContextHash(ikm: Uint8Array, appName: string, context: Uin
   // Zero intermediate material
   derived.fill(0)
   info.fill(0)
+  appNameHash.fill(0)
+  networkHash.fill(0)
 
   return result
 }
 
 /**
- * Validate the appName parameter per spec.
+ * Validate the appName parameter.
  * Must be 1-64 bytes, ASCII lowercase letters, digits, and hyphens only.
  */
 export function validateAppName(appName: string): void {
@@ -78,8 +105,8 @@ export function validateAppName(appName: string): void {
 
 /**
  * Parse a hex-encoded context string into a Uint8Array.
- * Validates per spec: non-empty, even-length, lowercase hex only,
- * no 0x prefix, max 2048 hex characters (1024 bytes).
+ * Validates: non-empty, even-length, lowercase hex only, no 0x prefix,
+ * max 2048 hex characters (1024 bytes).
  */
 export function parseHexContext(context: string): Uint8Array {
   if (typeof context !== 'string' || context.length === 0) {
@@ -103,3 +130,4 @@ export function parseHexContext(context: string): Uint8Array {
   }
   return bytes
 }
+

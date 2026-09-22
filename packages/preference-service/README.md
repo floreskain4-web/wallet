@@ -49,7 +49,6 @@ const template: BasePreferenceStore = {
   locale: 'en',
   currency: 'USD',
   externalLinkAck: false,
-  enableSignData: false,
   showSafeNotice: true,
   
   // Network configuration

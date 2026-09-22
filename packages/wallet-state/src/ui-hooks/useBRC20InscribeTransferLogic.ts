@@ -39,6 +39,7 @@ interface ContextData {
   isApproval: boolean
   tokenInfo?: TokenInfo
   amountEditable?: boolean
+  enableRBF: boolean
 }
 
 interface UpdateContextDataParams {
@@ -51,6 +52,7 @@ interface UpdateContextDataParams {
   amount?: string
   tokenInfo?: TokenInfo
   amountEditable?: boolean
+  enableRBF?: boolean
 }
 
 export interface BRC20InscribeTransferParams {
@@ -66,13 +68,11 @@ export function useBRC20InscribeTransferLogic() {
     step: Step.STEP1,
     ticker: ticker,
     isApproval: false,
+    enableRBF: true,
   })
-  const updateContextData = useCallback(
-    (params: UpdateContextDataParams) => {
-      setContextData(Object.assign({}, contextData, params))
-    },
-    [contextData, setContextData]
-  )
+  const updateContextData = useCallback((params: UpdateContextDataParams) => {
+    setContextData(prev => Object.assign({}, prev, params))
+  }, [])
   return {
     contextData,
     updateContextData,
@@ -120,6 +120,12 @@ export function useBRC20InscribeTransferLogicStep1(params: BRC20InscribeTransfer
       setInputAmount(contextData.amount.toString())
       setInputDisabled(true)
     }
+  }, [])
+
+  useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      updateContextData({ enableRBF })
+    })
   }, [])
 
   useEffect(() => {
@@ -211,6 +217,7 @@ export function useBRC20InscribeTransferLogicStep1(params: BRC20InscribeTransfer
         toAddressInfo: { address: order.payAddress, domain: '' },
         toAmount: order.totalFee,
         feeRate: feeRateBarState.feeRate,
+        enableRBF: contextData.enableRBF,
       })
       updateContextData({ order, amount, toSignData, step: Step.STEP2 })
     } catch (e) {
@@ -233,6 +240,11 @@ export function useBRC20InscribeTransferLogicStep1(params: BRC20InscribeTransfer
     defaultOutputValue,
     setOutputValue,
     disabled,
+    enableRBF: contextData.enableRBF,
+    setEnableRBF: (value: boolean) => {
+      updateContextData({ enableRBF: value })
+      wallet.setEnableRBF(value)
+    },
     loadingOnly,
     handleCancel,
   }
@@ -319,9 +331,11 @@ export function useBRC20InscribeTransferLogicStep3(params: BRC20InscribeTransfer
   const onSignPsbtHandleConfirm = async (signedDatas: SignedData[]) => {
     tools.showLoading(true)
     try {
-      const { success, txid, error } = await pushBitcoinTx(signedDatas[0].psbtHex)
+      const { success, error } = await pushBitcoinTx(signedDatas[0].psbtHex)
       if (success) {
-        nav.navigate('TxSuccessScreen', { txid })
+        updateContextData({
+          step: Step.STEP4,
+        })
       } else {
         throw new Error(error)
       }

@@ -55,6 +55,10 @@ export function genDummyUtxo(
       runeid: string
       amount: string
     }[]
+    alkanes?: {
+      alkaneid: string
+      amount: string
+    }[]
   },
   txid?: string,
   vout?: number
@@ -68,6 +72,7 @@ export function genDummyUtxo(
     pubkey: wallet.pubkey,
     inscriptions: assets?.inscriptions || [],
     runes: assets?.runes || [],
+    alkanes: assets?.alkanes || [],
   }
 }
 

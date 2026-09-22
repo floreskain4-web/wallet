@@ -1,5 +1,54 @@
 # @unisat/tx-helpers
 
+## 1.4.0
+
+### Minor Changes
+
+- Improve safety
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/keyring-service@1.3.0
+  - @unisat/wallet-bitcoin@1.2.0
+  - @unisat/wallet-shared@0.6.0
+
+## 1.3.0
+
+### Minor Changes
+
+- feat: add alkanes-lib
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/alkanes-lib@0.4.0
+
+## 1.2.3
+
+### Patch Changes
+
+- Optimize `sendRunes` fee calculation for transactions with many rune inputs.
+
+## 1.2.1
+
+### Patch Changes
+
+- Fix RBF input sequence handling when building PSBT inputs.
+- Optimize `sendAllBTC` fee calculation to avoid signing a dummy PSBT.
+
+## 1.2.0
+
+### Minor Changes
+
+- release: minor wave for accumulated wallet toolkit updates since the previous package release.
+
+### Patch Changes
+
+- Updated dependencies
+  - @unisat/keyring-service@1.2.0
+  - @unisat/wallet-shared@0.3.0
+
 ## 1.1.0
 
 ### Minor Changes

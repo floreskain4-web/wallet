@@ -2,6 +2,22 @@ import { AddressType, NetworkType } from '@unisat/wallet-types'
 import { bitcoin } from '../bitcoin-core'
 import { toPsbtNetwork } from '../network'
 
+const PAY_TO_ANCHOR_PROGRAM = Buffer.from('4e73', 'hex')
+const PAY_TO_ANCHOR_SCRIPT = Buffer.from('51024e73', 'hex')
+
+export function isPayToAnchorAddress(address: string, networkType: NetworkType): boolean {
+  try {
+    const decoded = bitcoin.address.fromBech32(address)
+    return (
+      decoded.prefix === toPsbtNetwork(networkType).bech32 &&
+      decoded.version === 1 &&
+      decoded.data.equals(PAY_TO_ANCHOR_PROGRAM)
+    )
+  } catch {
+    return false
+  }
+}
+
 /**
  * Convert public key to bitcoin payment object.
  */
@@ -170,11 +186,14 @@ export function scriptPkToAddress(
   networkType: NetworkType = NetworkType.MAINNET
 ) {
   const network = toPsbtNetwork(networkType)
+  const script = typeof scriptPk === 'string' ? Buffer.from(scriptPk, 'hex') : scriptPk
+
+  if (script.equals(PAY_TO_ANCHOR_SCRIPT)) {
+    return bitcoin.address.toBech32(PAY_TO_ANCHOR_PROGRAM, 1, network.bech32)
+  }
+
   try {
-    const address = bitcoin.address.fromOutputScript(
-      typeof scriptPk === 'string' ? Buffer.from(scriptPk, 'hex') : scriptPk,
-      network
-    )
+    const address = bitcoin.address.fromOutputScript(script, network)
     return address
   } catch (e) {
     return ''
@@ -183,6 +202,10 @@ export function scriptPkToAddress(
 
 export function addressToScriptPk(address: string, networkType: NetworkType): Buffer {
   const network = toPsbtNetwork(networkType)
+
+  if (isPayToAnchorAddress(address, networkType)) {
+    return PAY_TO_ANCHOR_SCRIPT
+  }
 
   try {
     return bitcoin.address.toOutputScript(address, network)
@@ -193,6 +216,8 @@ export function addressToScriptPk(address: string, networkType: NetworkType): Bu
 
 export function isValidAddress(address: string, networkType: NetworkType): boolean {
   if (!address) return false
+
+  if (isPayToAnchorAddress(address, networkType)) return true
 
   const network = toPsbtNetwork(networkType)
 

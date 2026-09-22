@@ -56,4 +56,22 @@ describe('UtilityService', () => {
       },
     })
   })
+
+  it('passes query params for getAppExtra', async () => {
+    const httpClient = {
+      get: vi.fn().mockResolvedValue({}),
+      post: vi.fn(),
+    }
+
+    const service = new UtilityService(httpClient as any)
+
+    await service.getAppExtra(1001, 'zh_TW')
+
+    expect(httpClient.get).toHaveBeenCalledWith('/v5/discovery/app-extra', {
+      query: {
+        id: 1001,
+        locale: 'zh_TW',
+      },
+    })
+  })
 })

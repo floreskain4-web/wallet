@@ -85,8 +85,6 @@ export const colors = Object.assign({}, palette, {
 
   txid_color: '#2AB2F8',
 
-  cat20_color: '#77A1F2',
-
   warning_content: '#F4B62CD9',
 
   warning_bg: '#F4B62C59',

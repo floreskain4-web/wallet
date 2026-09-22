@@ -130,9 +130,6 @@ export class WalletApiService {
   get alkanes() {
     return this.client.alkanes
   }
-  get cat() {
-    return this.client.cat
-  }
   get market() {
     return this.client.market
   }

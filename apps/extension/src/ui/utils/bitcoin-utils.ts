@@ -41,16 +41,12 @@ export function isValidHdPath(path: string): boolean {
     return false;
   }
 
-  // HD path should start with 'm' or 'M'
-  if (!path.startsWith('m') && !path.startsWith('M')) {
-    return false;
-  }
-
   // Split by '/' and validate each component
   const components = path.split('/');
 
-  // First component should be 'm' or 'M'
-  if (components[0] !== 'm' && components[0] !== 'M') {
+  // Keep this validation aligned with keyring-service: a usable path must
+  // start at m and contain at least one child segment.
+  if (components[0] !== 'm' || components.length < 2) {
     return false;
   }
 

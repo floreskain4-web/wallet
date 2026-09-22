@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { BUS_METHODS } from '@unisat/wallet-shared'
 import { useI18n, useNavigation, useTools, useWallet } from 'src/context'
+import { uiEventBus } from 'src/utils/eventBus'
 
 type Status = '' | 'error' | 'warning' | undefined
 export function useExportPrivateKeyScreenLogic() {
@@ -42,16 +44,37 @@ export function useExportPrivateKeyScreenLogic() {
     }
   }, [password])
 
+  const clearSensitiveState = useCallback(() => {
+    setPassword('')
+    setPrivateKey({ hex: '', wif: '' })
+    setStatus('')
+    setError('')
+  }, [])
+
+  useEffect(() => {
+    const handleLocked = () => {
+      clearSensitiveState()
+      nav.navigate('UnlockScreen', { autoUnlockByFace: false })
+    }
+
+    uiEventBus.addEventListener(BUS_METHODS.LOCKED, handleLocked)
+    return () => {
+      uiEventBus.removeEventListener(BUS_METHODS.LOCKED, handleLocked)
+    }
+  }, [clearSensitiveState, nav])
+
   function copy(str: string) {
     tools.copyToClipboard(str)
   }
 
   const onClickBack = () => {
+    clearSensitiveState()
     nav.goBack()
   }
 
   return {
     t,
+    password,
     setPassword,
     disabled,
     btnClick,

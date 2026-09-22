@@ -50,6 +50,7 @@ export function WalletProvider({
   onUserInitialize,
   onConnectError,
   onAccountChange,
+  disconnectOnNetworkChange = false,
   validateAddress = isSupportedAddressType,
   disableAutoConnect = false,
   disableConnect = false,
@@ -95,6 +96,23 @@ export function WalletProvider({
     }
   }, [clearConnection, wallet])
 
+  const loadConnectedAccount = useCallback(
+    async (connectedWallet: BaseWallet): Promise<ConnectedAccount | undefined> => {
+      const acc = await connectedWallet.getAccount()
+      if (!acc || !validateAddress(acc.address)) {
+        return undefined
+      }
+
+      let extendedData: Record<string, unknown> = {}
+      if (onUserInitialize) {
+        extendedData = await onUserInitialize(acc)
+      }
+
+      return { ...acc, ...extendedData }
+    },
+    [validateAddress, onUserInitialize]
+  )
+
   /**
    * Initialize wallets on mount
    */
@@ -111,14 +129,14 @@ export function WalletProvider({
 
           // Auto-reconnect if previously connected and not disabled
           if (!disableAutoConnect && connectedWalletType === w.config.type) {
+            if (disableConnect) {
+              clearConnection()
+              return
+            }
+
             try {
-              const acc = await w.getAccount()
-              if (acc && validateAddress(acc.address) && !disableConnect) {
-                let extendedData: Record<string, unknown> = {}
-                if (onUserInitialize) {
-                  extendedData = await onUserInitialize(acc)
-                }
-                const connectedAccount: ConnectedAccount = { ...acc, ...extendedData }
+              const connectedAccount = await loadConnectedAccount(w)
+              if (connectedAccount) {
                 setAccount(connectedAccount)
                 setWallet(w)
                 onAccountChange?.(connectedAccount)
@@ -141,10 +159,9 @@ export function WalletProvider({
     storageKey,
     disableAutoConnect,
     disableConnect,
-    validateAddress,
-    onUserInitialize,
     onAccountChange,
     clearConnection,
+    loadConnectedAccount,
   ])
 
   /**
@@ -153,32 +170,43 @@ export function WalletProvider({
   useEffect(() => {
     if (!wallet) return
 
-    const handleAccountChange = async () => {
-      setAccount(undefined)
+    const handleConnectionRefresh = async (options: { disconnectOnUnavailable: boolean }) => {
       setIsConnecting(true)
 
       try {
-        const acc = await wallet.getAccount()
-        if (acc && validateAddress(acc.address)) {
-          let extendedData: Record<string, unknown> = {}
-          if (onUserInitialize) {
-            extendedData = await onUserInitialize(acc)
-          }
-          const connectedAccount: ConnectedAccount = { ...acc, ...extendedData }
+        const connectedAccount = await loadConnectedAccount(wallet)
+        if (connectedAccount) {
           setAccount(connectedAccount)
           onAccountChange?.(connectedAccount)
-        } else {
+        } else if (options.disconnectOnUnavailable) {
           disconnect()
         }
       } catch {
+        if (!options.disconnectOnUnavailable) {
+          return
+        }
         disconnect()
       } finally {
         setIsConnecting(false)
       }
     }
 
-    const handleNetworkChange = () => {
-      disconnect()
+    const handleAccountChange = async (accounts?: unknown) => {
+      if (Array.isArray(accounts) && accounts.length === 0) {
+        disconnect()
+        return
+      }
+
+      await handleConnectionRefresh({ disconnectOnUnavailable: false })
+    }
+
+    const handleNetworkChange = async () => {
+      if (disconnectOnNetworkChange) {
+        disconnect()
+        return
+      }
+
+      await handleConnectionRefresh({ disconnectOnUnavailable: false })
     }
 
     wallet.addListener({
@@ -192,7 +220,7 @@ export function WalletProvider({
         onNetworkChange: handleNetworkChange,
       })
     }
-  }, [wallet, validateAddress, onUserInitialize, onAccountChange, disconnect])
+  }, [wallet, disconnectOnNetworkChange, loadConnectedAccount, onAccountChange, disconnect])
 
   /**
    * Handle wallet selection

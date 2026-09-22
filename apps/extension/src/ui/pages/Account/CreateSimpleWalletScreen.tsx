@@ -5,12 +5,29 @@ import { AddressTypeCard } from '@/ui/components/AddressTypeCard';
 import { FooterButtonContainer } from '@/ui/components/FooterButtonContainer';
 import { TabBar } from '@/ui/components/TabBar';
 import { satoshisToAmount } from '@/ui/utils';
-import { useI18n, useTools, useWallet } from '@unisat/wallet-state';
+import { uiEventBus, useI18n, useTools, useWallet } from '@unisat/wallet-state';
 
-import { ADDRESS_TYPES } from '@unisat/wallet-shared';
+import { ADDRESS_TYPES, BUS_METHODS } from '@unisat/wallet-shared';
 import { AddressType } from '@unisat/wallet-types';
+import { decode } from 'bs58check';
 import { useNavigate } from '../MainRoute';
 import { TabType } from './createHDWalletComponents/types';
+
+function getWifCompression(privateKey: string): boolean | undefined {
+  try {
+    const decoded = decode(privateKey);
+    if (decoded.length === 33) {
+      return false;
+    }
+    if (decoded.length === 34 && decoded[33] === 0x01) {
+      return true;
+    }
+  } catch {
+    // Step 1 validates the private key before this screen is shown.
+  }
+
+  return undefined;
+}
 
 function Step1({
   contextData,
@@ -19,31 +36,29 @@ function Step1({
   contextData: ContextData;
   updateContextData: (params: UpdateContextDataParams) => void;
 }) {
-  const [wif, setWif] = useState('');
   const [disabled, setDisabled] = useState(true);
   const wallet = useWallet();
   const { t } = useI18n();
   useEffect(() => {
     setDisabled(true);
 
-    if (!wif) {
+    if (!contextData.wif) {
       return;
     }
 
     setDisabled(false);
-  }, [wif]);
+  }, [contextData.wif]);
 
   const onChange = (e) => {
     const val = e.target.value;
-    setWif(val);
-    updateContextData({ step1CreateWordsCompleted: val });
+    updateContextData({ wif: val, step1CreateWordsCompleted: Boolean(val) });
   };
 
   const tools = useTools();
 
   const btnClick = async () => {
     try {
-      const _res = await wallet.createTmpKeyringWithPrivateKey(wif, AddressType.P2TR);
+      const _res = await wallet.createTmpKeyringWithPrivateKey(contextData.wif, AddressType.P2TR);
       if (_res.accounts.length == 0) {
         throw new Error(t('invalid_privatekey'));
       }
@@ -52,7 +67,6 @@ function Step1({
       return;
     }
     updateContextData({
-      wif,
       tabType: TabType.CHOOSE_ADDRESS_TYPE
     });
   };
@@ -63,6 +77,7 @@ function Step1({
 
       <Input
         placeholder={t('wif_private_key_or_hex_private_key')}
+        value={contextData.wif}
         onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
           if ('Enter' == e.key) {
             btnClick();
@@ -109,9 +124,9 @@ function Step2({
           isUnisatLegacy: v.isUnisatLegacy
         };
       });
-  }, [contextData]);
+  }, []);
 
-  const [previewAddresses, setPreviewAddresses] = useState<string[]>(hdPathOptions.map((v) => ''));
+  const [previewAddresses, setPreviewAddresses] = useState<string[]>(hdPathOptions.map(() => ''));
 
   const [addressAssets, setAddressAssets] = useState<{
     [key: string]: { total_btc: string; satoshis: number; total_inscription: number };
@@ -124,11 +139,56 @@ function Step2({
     addressBalances: {}
   });
   const self = selfRef.current;
+  const wifCompression = useMemo(() => getWifCompression(contextData.wif), [contextData.wif]);
+
+  const addressCandidates = useMemo(
+    () =>
+      hdPathOptions.flatMap((option) => {
+        if (option.addressType === AddressType.P2PKH) {
+          if (wifCompression === false) {
+            return [
+              {
+                ...option,
+                compressed: false,
+                unsupported: true,
+                label: `${option.label} (${t('not_supported')})`
+              },
+              {
+                ...option,
+                compressed: true,
+                unsupported: false,
+                label: `${option.label} (compressed)`
+              }
+            ];
+          }
+
+          return [{ ...option, compressed: true, unsupported: false, label: option.label }];
+        }
+
+        return [
+          {
+            ...option,
+            compressed: true,
+            unsupported: false,
+            label: option.label
+          }
+        ];
+      }),
+    [hdPathOptions, t, wifCompression]
+  );
+
   const run = async () => {
     const addresses: string[] = [];
-    for (let i = 0; i < hdPathOptions.length; i++) {
-      const options = hdPathOptions[i];
-      const keyring = await wallet.createTmpKeyringWithPrivateKey(contextData.wif, options.addressType);
+    self.maxSatoshis = 0;
+    self.recommended = Math.max(0, addressCandidates.findIndex((candidate) => !candidate.unsupported));
+    self.addressBalances = {};
+    for (let i = 0; i < addressCandidates.length; i++) {
+      const options = addressCandidates[i];
+      const keyring = await wallet.createTmpKeyringWithPrivateKey(
+        contextData.wif,
+        options.addressType,
+        options.compressed
+      );
       const address = keyring.accounts[0].address;
       addresses.push(address);
     }
@@ -143,29 +203,47 @@ function Step2({
         satoshis,
         total_inscription: balance.inscriptionCount
       };
-      if (satoshis > self.maxSatoshis) {
+      if (!addressCandidates[i].unsupported && satoshis > self.maxSatoshis) {
         self.maxSatoshis = satoshis;
         self.recommended = i;
       }
 
-      updateContextData({ addressType: hdPathOptions[self.recommended].addressType });
+      const recommended = addressCandidates[self.recommended];
+      updateContextData({
+        addressType: recommended.addressType,
+        compressed: recommended.compressed
+      });
       setAddressAssets(self.addressBalances);
     }
     setPreviewAddresses(addresses);
   };
   useEffect(() => {
     run();
-  }, [contextData.wif]);
+  }, [addressCandidates, contextData.wif]);
 
   const pathIndex = useMemo(() => {
-    return hdPathOptions.findIndex((v) => v.addressType === contextData.addressType);
-  }, [hdPathOptions, contextData.addressType]);
+    return addressCandidates.findIndex(
+      (candidate) =>
+        candidate.addressType === contextData.addressType &&
+        candidate.compressed === contextData.compressed
+    );
+  }, [addressCandidates, contextData.addressType, contextData.compressed]);
 
   const navigate = useNavigate();
+  const selectedCandidate = addressCandidates[pathIndex];
 
   const onNext = async () => {
+    if (!selectedCandidate || selectedCandidate.unsupported) {
+      return;
+    }
     try {
-      await wallet.createKeyringWithPrivateKey(contextData.wif, contextData.addressType);
+      await wallet.createKeyringWithPrivateKey(
+        contextData.wif,
+        contextData.addressType,
+        undefined,
+        contextData.compressed
+      );
+      updateContextData({ wif: '', step1CreateWordsCompleted: false });
       navigate('MainScreen');
     } catch (e) {
       tools.toastError((e as any).message);
@@ -174,7 +252,7 @@ function Step2({
   return (
     <Column gap="lg">
       <Text text={t('address_type')} preset="bold" />
-      {hdPathOptions.map((item, index) => {
+      {addressCandidates.map((item, index) => {
         const address = previewAddresses[index];
         const assets = addressAssets[address] || {
           total_btc: '--',
@@ -188,12 +266,13 @@ function Step2({
         return (
           <AddressTypeCard
             key={index}
-            label={`${item.label}`}
+            label={item.label}
             address={address}
             assets={assets}
-            checked={index == pathIndex}
-            onClick={() => {
-              updateContextData({ addressType: item.addressType });
+            checked={index == pathIndex && !item.unsupported}
+            disabled={item.unsupported}
+            onClick={item.unsupported ? undefined : () => {
+              updateContextData({ addressType: item.addressType, compressed: item.compressed });
             }}
             data-testid={`address-type-card-${index}`}
           />
@@ -201,7 +280,13 @@ function Step2({
       })}
 
       <FooterButtonContainer>
-        <Button text={t('continue')} preset="primary" onClick={onNext} data-testid="private-key-address-type-continue-button" />
+        <Button
+          disabled={!selectedCandidate || selectedCandidate.unsupported}
+          text={t('continue')}
+          preset="primary"
+          onClick={onNext}
+          data-testid="private-key-address-type-continue-button"
+        />
       </FooterButtonContainer>
     </Column>
   );
@@ -210,6 +295,7 @@ function Step2({
 interface ContextData {
   wif: string;
   addressType: AddressType;
+  compressed?: boolean;
   step1CreateWordsCompleted: boolean;
   tabType: TabType;
 }
@@ -217,6 +303,7 @@ interface ContextData {
 interface UpdateContextDataParams {
   wif?: string;
   addressType?: AddressType;
+  compressed?: boolean;
   step1CreateWordsCompleted?: boolean;
   tabType?: TabType;
 }
@@ -225,16 +312,37 @@ export default function CreateSimpleWalletScreen() {
   const [contextData, setContextData] = useState<ContextData>({
     wif: '',
     addressType: AddressType.P2WPKH,
+    compressed: true,
     step1CreateWordsCompleted: false,
     tabType: TabType.IMPORT_WORDS
   });
   const { t } = useI18n();
+  const navigate = useNavigate();
   const updateContextData = useCallback(
     (params: UpdateContextDataParams) => {
       setContextData(Object.assign({}, contextData, params));
     },
     [contextData, setContextData]
   );
+  const clearSensitiveState = useCallback(() => {
+    setContextData((current) => ({
+      ...current,
+      wif: '',
+      step1CreateWordsCompleted: false
+    }));
+  }, []);
+
+  useEffect(() => {
+    const handleLocked = () => {
+      clearSensitiveState();
+      navigate('WelcomeScreen');
+    };
+
+    uiEventBus.addEventListener(BUS_METHODS.LOCKED, handleLocked);
+    return () => {
+      uiEventBus.removeEventListener(BUS_METHODS.LOCKED, handleLocked);
+    };
+  }, [clearSensitiveState, navigate]);
 
   const items = [
     {
@@ -255,6 +363,7 @@ export default function CreateSimpleWalletScreen() {
     <Layout>
       <Header
         onBack={() => {
+          clearSensitiveState();
           window.history.go(-1);
         }}
         title={t('create_single_wallet')}

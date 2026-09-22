@@ -2,10 +2,9 @@ import compareVersions from 'compare-versions'
 import { useCallback } from 'react'
 
 import { BABYLON_CONFIG_MAP } from '@unisat/babylon-service/types'
-import { CAT_VERSION, CHAINS_MAP, PlatformEnv } from '@unisat/wallet-shared'
-import { AddressType, ChainType, NetworkType } from '@unisat/wallet-types'
+import { CHAINS_MAP, PlatformEnv } from '@unisat/wallet-shared'
+import { ChainType, NetworkType } from '@unisat/wallet-types'
 import { useWallet } from '../context/WalletContext'
-import { getAddressType } from '../utils/bitcoin-utils'
 
 import { useI18n } from 'src/context/I18nContext'
 import { AppState } from '..'
@@ -148,15 +147,6 @@ export function useAddressExplorerUrl(address: string) {
   }
 }
 
-export function useCAT20TokenInfoExplorerUrl(version: CAT_VERSION, tokenId: string) {
-  const chain = useChain()!
-  if (version === CAT_VERSION.V1) {
-    return `${chain.unisatExplorerUrl}/cat20/${tokenId}`
-  } else {
-    return `${chain.unisatExplorerUrl}/cat20-v2/${tokenId}`
-  }
-}
-
 export function useBRC20TokenInfoExplorerUrl(ticker: string) {
   const chain = useChain()!
   return `${chain.unisatExplorerUrl}/brc20/${encodeURIComponent(ticker)}`
@@ -246,47 +236,6 @@ export function useSkipVersionCallback() {
 export function useAutoLockTimeId() {
   const state = useSettingsState()
   return state.autoLockTimeId
-}
-
-export function useAddressTips() {
-  const chain = useChain()!
-  const account = useCurrentAccount()
-  const address = account.address
-  const chanEnum = chain.enum
-  const { t } = useI18n()
-  let ret = {
-    homeTip: '',
-    sendTip: '',
-  }
-  try {
-    const chain = CHAINS_MAP[chanEnum]!
-    const addressType = getAddressType(address, chain.networkType)
-    if (chain.isFractal && addressType === AddressType.P2PKH) {
-      ret = {
-        homeTip: t('legacy_address_warning_3'),
-        sendTip: t('legacy_address_warning_4'),
-      }
-    }
-  } catch (e) {
-    console.log(e)
-  }
-
-  return ret
-}
-
-export function useCAT721NFTContentBaseUrl(version: CAT_VERSION) {
-  const chainType = useChainType()
-  if (chainType === ChainType.FRACTAL_BITCOIN_MAINNET) {
-    if (version === CAT_VERSION.V1) {
-      return 'https://tracker-fractal-mainnet.catprotocol.org'
-    } else {
-      return 'https://tracker2-fractal-mainnet.catprotocol.org'
-    }
-  } else if (chainType === ChainType.FRACTAL_BITCOIN_TESTNET) {
-    return 'https://tracker-fractal-testnet.catprotocol.org'
-  } else {
-    return ''
-  }
 }
 
 export function useBabylonConfig() {

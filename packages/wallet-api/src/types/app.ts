@@ -8,6 +8,26 @@ import { NetworkType } from '@unisat/wallet-types'
 // Application and configuration related
 // ========================================
 
+export interface AppDisclaimerMeta {
+  enabled: boolean
+  version?: string
+}
+
+export interface AppExtraInfo {
+  disclaimer?: AppDisclaimerMeta
+}
+
+export interface AppDisclaimer {
+  title?: string
+  content: string
+  confirmText?: string
+  cancelText?: string
+}
+
+export interface AppExtra {
+  disclaimer?: AppDisclaimer
+}
+
 export interface AppInfo {
   logo: string
   title: string
@@ -20,6 +40,7 @@ export interface AppInfo {
   readtime?: number
   new?: boolean
   tagColor?: string
+  extraInfo?: AppExtraInfo
 }
 
 export interface AppSummary {

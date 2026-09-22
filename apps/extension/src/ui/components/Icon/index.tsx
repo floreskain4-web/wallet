@@ -55,6 +55,7 @@ export const svgRegistry = {
   // status
   success: '/images/icons/status/success.svg',
   warning: '/images/icons/status/warning.svg',
+  warning2: '/images/icons/status/warning2.svg',
   alert: '/images/icons/status/alert.svg',
   risk: '/images/icons/status/risk.svg',
   info: '/images/icons/status/info.svg',
@@ -226,7 +227,8 @@ const iconImgList: Array<IconTypes> = [
 
   'emptyBox',
   'mint_action',
-  'trade'
+  'trade',
+  'warning2'
 ];
 
 export type IconTypes = keyof typeof svgRegistry;

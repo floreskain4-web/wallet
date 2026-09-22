@@ -67,7 +67,6 @@ export class UnisatProvider extends EventEmitter {
   multiSignMessage = async (messages: { text: string; type: string }[]) => this.bitcoinAPI.multiSignMessage(messages);
   verifyMessageOfBIP322Simple = async (address: string, message: string, signature: string, network?: number) =>
     this.bitcoinAPI.verifyMessageOfBIP322Simple(address, message, signature, network);
-  signData = async (data: string, type: string) => this.bitcoinAPI.signData(data, type);
   sendBitcoin = async (
     toAddress: string,
     satoshis: number,

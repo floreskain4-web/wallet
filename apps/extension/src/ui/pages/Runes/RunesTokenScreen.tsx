@@ -33,6 +33,7 @@ export default function RunesTokenScreen() {
     onClickMint,
     enableTransfer,
     onClickSend,
+    onClickParent,
     ordinalsWebsite,
     txExplorerUrl,
     enableTrade,
@@ -145,11 +146,7 @@ export default function RunesTokenScreen() {
             {tokenSummary.runeInfo.parent ? <Line /> : null}
 
             {tokenSummary.runeInfo.parent ? (
-              <Section
-                title={t('parent')}
-                value={tokenSummary.runeInfo.parent}
-                link={`${ordinalsWebsite}/inscription/${tokenSummary.runeInfo.parent}`}
-              />
+              <Section title={t('parent')} value={tokenSummary.runeInfo.parent} onClick={onClickParent} />
             ) : null}
 
             <ViewOnExplorerAction onClick={onClickViewOnExplorer} />

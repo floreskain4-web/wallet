@@ -183,6 +183,9 @@ const slice: Slice<AccountsState> = createSlice({
     setAddressSummary(state, action: { payload: any }) {
       state.addressSummary = action.payload
     },
+    setModelPopover(state, action: { payload: MolelsPopover }) {
+      state.molelsPopover = action.payload
+    },
     expireBalance(state) {
       const balance = state.balanceMap[state.current.address]
       if (balance) {

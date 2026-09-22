@@ -5,7 +5,6 @@ import { updateVersion } from '../actions/global'
 import {
   AlkanesAssetTabKey,
   AssetTabKey,
-  CATAssetTabKey,
   MoreAssetTabKey,
   NavigationSource,
   OrdinalsAssetTabKey,
@@ -15,14 +14,12 @@ export enum WallettopTabScreenTabKey {
   Ordinals,
   Atomicals,
   Runes,
-  CAT20,
   Alkanes,
 }
 
 export interface UIState {
   assetTabKey: AssetTabKey
   ordinalsAssetTabKey: OrdinalsAssetTabKey
-  catAssetTabKey: CATAssetTabKey
   alkanesAssetTabKey: AlkanesAssetTabKey
   moreAssetTabKey: MoreAssetTabKey
   uiTxCreateScreen: {
@@ -32,6 +29,7 @@ export interface UIState {
       inscription?: Inscription
     }
     inputAmount: string
+    enableRBF: boolean
   }
   addressInput: {
     address: string
@@ -64,7 +62,6 @@ export interface UIState {
 export const initialState: UIState = {
   assetTabKey: AssetTabKey.ORDINALS,
   ordinalsAssetTabKey: OrdinalsAssetTabKey.ALL,
-  catAssetTabKey: CATAssetTabKey.CAT20,
   alkanesAssetTabKey: AlkanesAssetTabKey.TOKEN,
   moreAssetTabKey: MoreAssetTabKey.ALKANES_TOKEN,
   uiTxCreateScreen: {
@@ -73,6 +70,7 @@ export const initialState: UIState = {
       domain: '',
     },
     inputAmount: '',
+    enableRBF: true,
   },
   addressInput: {
     address: '',
@@ -114,7 +112,6 @@ const slice: Slice<UIState> = createSlice({
         payload: {
           assetTabKey?: AssetTabKey
           ordinalsAssetTabKey?: OrdinalsAssetTabKey
-          catAssetTabKey?: CATAssetTabKey
           alkanesAssetTabKey?: AlkanesAssetTabKey
           moreAssetTabKey?: MoreAssetTabKey
         }
@@ -128,9 +125,6 @@ const slice: Slice<UIState> = createSlice({
         state.ordinalsAssetTabKey = payload.ordinalsAssetTabKey
       }
 
-      if (payload.catAssetTabKey !== undefined) {
-        state.catAssetTabKey = payload.catAssetTabKey
-      }
       if (payload.alkanesAssetTabKey !== undefined) {
         state.alkanesAssetTabKey = payload.alkanesAssetTabKey
       }
@@ -149,6 +143,7 @@ const slice: Slice<UIState> = createSlice({
             inscription?: Inscription
           }
           inputAmount?: string
+          enableRBF?: boolean
         }
       }
     ) {
@@ -157,6 +152,9 @@ const slice: Slice<UIState> = createSlice({
       }
       if (action.payload.inputAmount !== undefined) {
         state.uiTxCreateScreen.inputAmount = action.payload.inputAmount
+      }
+      if (action.payload.enableRBF !== undefined) {
+        state.uiTxCreateScreen.enableRBF = action.payload.enableRBF
       }
 
       state.uiTxCreateScreen = { ...state.uiTxCreateScreen }
@@ -275,9 +273,6 @@ const slice: Slice<UIState> = createSlice({
       if (!state.ordinalsAssetTabKey) {
         state.ordinalsAssetTabKey = OrdinalsAssetTabKey.ALL
       }
-      if (!state.catAssetTabKey) {
-        state.catAssetTabKey = CATAssetTabKey.CAT20
-      }
       if (!state.alkanesAssetTabKey) {
         state.alkanesAssetTabKey = AlkanesAssetTabKey.TOKEN
       }
@@ -289,6 +284,8 @@ const slice: Slice<UIState> = createSlice({
       }
       if (!state.uiTxCreateScreen) {
         state.uiTxCreateScreen = initialState.uiTxCreateScreen
+      } else if (state.uiTxCreateScreen.enableRBF === undefined) {
+        state.uiTxCreateScreen.enableRBF = true
       }
       if (!state.feeRateBar) {
         state.feeRateBar = initialState.feeRateBar

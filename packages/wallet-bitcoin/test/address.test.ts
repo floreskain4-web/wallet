@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { AddressType, NetworkType } from '@unisat/wallet-types'
-import { decodeAddress, getAddressType, isValidAddress, publicKeyToAddress } from '../src/address'
+import {
+  addressToScriptPk,
+  decodeAddress,
+  getAddressType,
+  isValidAddress,
+  isPayToAnchorAddress,
+  publicKeyToAddress,
+  scriptPkToAddress,
+} from '../src/address'
 
 const p2wpkh_data = {
   pubkey: '02b602ad190efb7b4f520068e3f8ecf573823d9e2557c5229231b4e14b79bbc0d8',
@@ -18,6 +26,12 @@ const p2tr_data = {
   pubkey: '0333bc88101f32b7ba799504d9340e77aedcf0ea3a047131737e5eb4e5bee23406',
   mainnet_address: 'bc1p8wat4p7077p3k6waauz0pjryywfxly35uz74ve9usp4jp6mk04uqd2mk58',
   testnet_address: 'tb1p8wat4p7077p3k6waauz0pjryywfxly35uz74ve9usp4jp6mk04uq6zdewg',
+}
+
+const pay_to_anchor_data = {
+  mainnet_address: 'bc1pfeessrawgf',
+  testnet_address: 'tb1pfees9rn5nz',
+  script_pk: '51024e73',
 }
 
 const p2pkh_data = {
@@ -97,6 +111,13 @@ describe('address', () => {
       expect(isValidAddress(p2pkh_data.testnet_address, NetworkType.TESTNET)).toBe(true)
     })
 
+    it('should validate Pay-to-Anchor addresses correctly', () => {
+      expect(isValidAddress(pay_to_anchor_data.mainnet_address, NetworkType.MAINNET)).toBe(true)
+      expect(isValidAddress(pay_to_anchor_data.testnet_address, NetworkType.TESTNET)).toBe(true)
+      expect(isValidAddress(pay_to_anchor_data.mainnet_address, NetworkType.TESTNET)).toBe(false)
+      expect(isPayToAnchorAddress(pay_to_anchor_data.mainnet_address, NetworkType.MAINNET)).toBe(true)
+    })
+
     it('should detect cross-network invalid addresses', () => {
       expect(isValidAddress(p2pkh_data.mainnet_address, NetworkType.TESTNET)).toBe(false)
       expect(isValidAddress(p2pkh_data.testnet_address, NetworkType.MAINNET)).toBe(false)
@@ -151,6 +172,15 @@ describe('address', () => {
       expect(decodeAddress('invalid address').addressType).toBe(AddressType.UNKNOWN)
       expect(decodeAddress('bc1qxxx').addressType).toBe(AddressType.UNKNOWN)
       expect(decodeAddress('').addressType).toBe(AddressType.UNKNOWN)
+    })
+  })
+
+  describe('Pay-to-Anchor scripts', () => {
+    it('converts addresses to and from the standard anchor output script', () => {
+      const script = addressToScriptPk(pay_to_anchor_data.mainnet_address, NetworkType.MAINNET)
+      expect(script.toString('hex')).toBe(pay_to_anchor_data.script_pk)
+      expect(scriptPkToAddress(script, NetworkType.MAINNET)).toBe(pay_to_anchor_data.mainnet_address)
+      expect(scriptPkToAddress(script, NetworkType.TESTNET)).toBe(pay_to_anchor_data.testnet_address)
     })
   })
 })

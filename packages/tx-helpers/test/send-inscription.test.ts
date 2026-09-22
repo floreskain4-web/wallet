@@ -80,6 +80,26 @@ describe('sendInscription', () => {
     })
 
     describe('inscription maybe lost', function () {
+      it.each([
+        ['runes', { runes: [{ runeid: '1000:10', amount: '100' }] }],
+        ['alkanes', { alkanes: [{ alkaneid: '1:10', amount: '100' }] }],
+      ])('rejects an inscription UTXO containing %s', async function (_assetType, assets) {
+        await expect(
+          dummySendInscription({
+            toAddress: toWallet.address,
+            btcWallet: fromBtcWallet,
+            btcUtxos: genDummyUtxos(fromBtcWallet, [10000]),
+            assetWallet: fromAssetWallet,
+            assetUtxo: genDummyUtxo(fromAssetWallet, 10000, {
+              inscriptions: [{ inscriptionId: '001', offset: 1000 }],
+              ...assets,
+            }),
+            outputValue: 1001,
+            feeRate: 1,
+          })
+        ).rejects.toMatchObject({ code: ErrorCodes.NOT_SAFE_UTXOS })
+      })
+
       it('safe outputvalue', async function () {
         const ret = await dummySendInscription({
           toAddress: toWallet.address,

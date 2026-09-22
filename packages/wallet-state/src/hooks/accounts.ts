@@ -1,17 +1,18 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 
-import { Account } from '@unisat/wallet-shared'
+import { Account, getAccountCapabilities } from '@unisat/wallet-shared'
 
 import { KeyringType } from '@unisat/keyring-service/types'
 import { AddressType, ChainType } from '@unisat/wallet-types'
 
-import { AppState } from '..'
+import type { AppState } from '..'
 import { useWallet } from '../context/WalletContext'
 import { accountActions } from '../reducers/accounts'
 import { keyringsActions } from '../reducers/keyrings'
 import { settingsActions } from '../reducers/settings'
 import { useAppDispatch, useAppSelector } from './base'
 import { useCurrentKeyring } from './keyrings'
+import { useChainType } from './settings'
 
 export function useAccountsState(): AppState['accounts'] {
   return useAppSelector(state => state.accounts)
@@ -25,6 +26,11 @@ export function useCurrentAccount() {
 export function useCurrentAddress() {
   const accountsState = useAccountsState()
   return accountsState.current.address
+}
+
+export function useCurrentAccountCapabilities() {
+  const currentAccount = useCurrentAccount()
+  return useMemo(() => getAccountCapabilities(currentAccount), [currentAccount])
 }
 
 export function useAccounts() {
@@ -182,39 +188,23 @@ export function useFetchBalanceCallback() {
   const dispatch = useAppDispatch()
   const wallet = useWallet()
   const currentAccount = useCurrentAccount()
-  const balance = useAccountBalance()
+  const { address } = currentAccount
+  const chainType = useChainType()
   return useCallback(async () => {
-    if (!currentAccount.address) return
-    // const cachedBalance = await wallet.getAddressCacheBalance(currentAccount.address);
-    // const _accountBalance = await wallet.getAddressBalance(currentAccount.address);
-    // dispatch(
-    //   accountActions.setBalance({
-    //     address: currentAccount.address,
-    //     amount: _accountBalance.amount,
-    //     btc_amount: _accountBalance.btc_amount,
-    //     inscription_amount: _accountBalance.inscription_amount,
-    //     confirm_btc_amount: _accountBalance.confirm_btc_amount,
-    //     pending_btc_amount: _accountBalance.pending_btc_amount
-    //   })
-    // );
-    // if (cachedBalance.amount !== _accountBalance.amount) {
-    //   wallet.expireUICachedData(currentAccount.address);
-    //   dispatch(accountActions.expireHistory());
-    // }
+    if (!address) return
 
-    const summary = await wallet.getAddressSummary(currentAccount.address)
-    summary.address = currentAccount.address
-    dispatch(accountActions['setAddressSummary']!(summary))
+    const summary = await wallet.getAddressSummary(address)
+    dispatch(accountActions['setAddressSummary']!({ ...summary, address }))
 
-    const balanceV2 = await wallet.getAddressBalanceV2(currentAccount.address)
+    const balanceV2 = await wallet.getAddressBalanceV2(address)
     dispatch(
       accountActions['setBalanceV2']!({
-        address: currentAccount.address,
+        address,
         balance: balanceV2,
         chainType: balanceV2.chainType,
       })
     )
-  }, [dispatch, wallet, currentAccount, balance])
+  }, [dispatch, wallet, address, chainType])
 }
 
 export function useReloadAccounts() {

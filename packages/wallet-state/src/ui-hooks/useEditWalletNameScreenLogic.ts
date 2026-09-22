@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 
+import { MAX_ALIAS_NAME_LENGTH } from '@unisat/wallet-shared'
+
 import { keyringsActions, useAppDispatch, useI18n, useNavigation, useWallet } from '..'
 export function useEditWalletNameScreenLogic() {
   const nav = useNavigation()
@@ -33,15 +35,15 @@ export function useEditWalletNameScreenLogic() {
   }, [alianName])
 
   const truncatedTitle = useMemo(() => {
-    if (keyring.alianName && keyring.alianName.length > 20) {
-      return keyring.alianName.slice(0, 20) + '...'
+    if (keyring.alianName && keyring.alianName.length > MAX_ALIAS_NAME_LENGTH) {
+      return keyring.alianName.slice(0, MAX_ALIAS_NAME_LENGTH) + '...'
     }
     return keyring.alianName || ''
   }, [keyring.alianName])
 
   const onInputChange = (e: { target: { value: string } } | string) => {
     const value = typeof e === 'string' ? e : e.target.value
-    if (value.length <= 20) {
+    if (value.length <= MAX_ALIAS_NAME_LENGTH) {
       setAlianName(value)
     }
   }

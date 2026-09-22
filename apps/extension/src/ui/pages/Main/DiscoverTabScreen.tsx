@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 
-import { Card, Carousel, Column, Content, Footer, Header, Image, Layout, Row, Text, Tooltip } from '@/ui/components';
+import { Button, Card, Carousel, Column, Content, Footer, Header, Icon, Image, Layout, Row, Text, Tooltip } from '@/ui/components';
+import { BottomModal } from '@/ui/components/BottomModal';
 import { NavTabBar } from '@/ui/components/NavTabBar';
 import { SwitchNetworkBar } from '@/ui/components/SwitchNetworkBar';
 import { TabBar } from '@/ui/components/TabBar';
+import { colors } from '@/ui/theme/colors';
+import { fontSizes } from '@/ui/theme/font';
 import { SearchBar } from '@/ui/pages/Main/DiscoverTabComponents/SearchBar';
 import { getAddressType } from '@/ui/utils/bitcoin-utils';
-import { AppInfo } from '@unisat/wallet-shared';
+import { AppDisclaimer, AppInfo } from '@unisat/wallet-shared';
 import {
   discoveryActions,
   useAppDispatch,
@@ -19,6 +22,7 @@ import {
   useLastFetchInfo,
   useNetworkType,
   useReadApp,
+  useTools,
   useWallet
 } from '@unisat/wallet-state';
 
@@ -47,9 +51,58 @@ function BannerItem({ img, link }: { img: string; link: string }) {
   );
 }
 
-function AppItem({ info, onClick }: { info: AppInfo; onClick?: () => void }) {
-  const readApp = useReadApp();
-  const navigate = useNavigate();
+function DiscoverAppDisclaimerModal({
+  disclaimer,
+  onClose,
+  onContinue
+}: {
+  disclaimer: AppDisclaimer;
+  onClose: () => void;
+  onContinue: () => void;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <BottomModal onClose={onClose}>
+      <Column>
+        <Row justifyBetween itemsCenter style={{ height: 20 }}>
+          <Row />
+          <Text text={disclaimer?.title || t('disclaimer')} textCenter size="md" />
+          <Row onClick={onClose}>
+            <Icon icon="close" size={12} />
+          </Row>
+        </Row>
+
+        <Row fullX style={{ borderTopWidth: 1, borderColor: colors.border }} my="md" />
+
+        <Column
+          justifyCenter
+          mb="lg"
+          style={{
+            maxHeight: '40vh',
+            overflow: 'auto'
+          }}>
+          <Text
+            style={{
+              fontSize: fontSizes.sm,
+              lineHeight: 2,
+              whiteSpace: 'pre-line'
+            }}
+            wrap
+            text={disclaimer?.content}
+          />
+        </Column>
+
+        <Row full>
+          <Button text={disclaimer?.cancelText || t('cancel')} preset="defaultV2" full onClick={onClose} />
+          <Button text={disclaimer?.confirmText || t('continue')} preset="primaryV2" full onClick={onContinue} />
+        </Row>
+      </Column>
+    </BottomModal>
+  );
+}
+
+function AppItem({ info, onClick }: { info: AppInfo; onClick: (info: AppInfo) => void }) {
   const { t } = useI18n();
 
   const currentAddress = useCurrentAddress();
@@ -71,22 +124,7 @@ function AppItem({ info, onClick }: { info: AppInfo; onClick?: () => void }) {
         borderRadius: 16
       }}
       onClick={() => {
-        if (onClick) {
-          onClick();
-          return;
-        }
-
-        if (info.route) {
-          navigate(info.route as any);
-          return;
-        }
-
-        if (info.url) {
-          window.open(info.url);
-          return;
-        }
-
-        readApp(info.id);
+        onClick(info);
       }}>
       <Row full>
         <Column justifyCenter>
@@ -117,7 +155,7 @@ function AppItem({ info, onClick }: { info: AppInfo; onClick?: () => void }) {
 
 export default function DiscoverTabScreen() {
   const chainType = useChainType();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
 
   const [tabKey, setTabKey] = useState(0);
 
@@ -127,9 +165,51 @@ export default function DiscoverTabScreen() {
   const hasNewBanner = useHasNewBanner();
 
   const [switchChainModalVisible, setSwitchChainModalVisible] = useState(false);
+  const [disclaimerApp, setDisclaimerApp] = useState<AppInfo | null>(null);
+  const [disclaimer, setDisclaimer] = useState<AppDisclaimer | null>(null);
 
   const wallet = useWallet();
+  const readApp = useReadApp();
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const tools = useTools();
+
+  const openApp = (info: AppInfo) => {
+    if (info.route) {
+      navigate(info.route as any);
+      return;
+    }
+
+    if (info.url) {
+      window.open(info.url);
+      return;
+    }
+
+    readApp(info.id);
+  };
+
+  const onAppClick = async (info: AppInfo) => {
+    if (info.extraInfo?.disclaimer?.enabled) {
+      tools.showLoading(true);
+      try {
+        const appExtra = await wallet.getAppExtra(info.id, locale);
+        if (appExtra.disclaimer?.content) {
+          setDisclaimer(appExtra.disclaimer);
+          setDisclaimerApp(info);
+          return;
+        }
+        tools.toastError('Failed to load app notice');
+      } catch (e) {
+        tools.toastError((e as any).message);
+      } finally {
+        tools.showLoading(false);
+      }
+
+      return;
+    }
+
+    openApp(info);
+  };
 
   useEffect(() => {
     if (lastFetchInfo.lasfFetchChainType === chainType && Date.now() - lastFetchInfo.lastFetchTime < 1000 * 60 * 1) {
@@ -198,7 +278,7 @@ export default function DiscoverTabScreen() {
       children: (
         <Column gap="lg">
           {v.items.map((w) => (
-            <AppItem key={w.id} info={w} />
+            <AppItem key={w.id} info={w} onClick={onAppClick} />
           ))}
         </Column>
       )
@@ -255,6 +335,22 @@ export default function DiscoverTabScreen() {
           <SwitchChainModal
             onClose={() => {
               setSwitchChainModalVisible(false);
+            }}
+          />
+        )}
+
+        {disclaimerApp && disclaimer && (
+          <DiscoverAppDisclaimerModal
+            disclaimer={disclaimer}
+            onClose={() => {
+              setDisclaimerApp(null);
+              setDisclaimer(null);
+            }}
+            onContinue={() => {
+              const app = disclaimerApp;
+              setDisclaimerApp(null);
+              setDisclaimer(null);
+              openApp(app);
             }}
           />
         )}

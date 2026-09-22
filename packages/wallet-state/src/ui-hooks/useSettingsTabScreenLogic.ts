@@ -1,5 +1,11 @@
 import { KeyringType } from '@unisat/keyring-service/types'
-import { ADDRESS_TYPES, FEEDBACK_URL, PlatformEnv } from '@unisat/wallet-shared'
+import {
+  ADDRESS_TYPES,
+  AccountSignMethod,
+  FEEDBACK_URL,
+  PlatformEnv,
+  getAccountCapabilities,
+} from '@unisat/wallet-shared'
 import { useMemo, useState } from 'react'
 import { useDevice, useI18n, useNavigation, useTools, useWallet } from 'src/context'
 import { useChain, useCurrentAccount, useCurrentKeyring, useVersionInfo } from 'src/hooks'
@@ -36,6 +42,11 @@ export function useSettingsTabScreenLogic() {
     return currentKeyring.hdPath !== '' && item.hdPath !== currentKeyring.hdPath
   }, [currentKeyring])
 
+  const currentKeyringCapabilities = useMemo(
+    () => getAccountCapabilities({ type: currentKeyring.type }),
+    [currentKeyring.type]
+  )
+
   const settings_connectedSites: SettingsItemType = useMemo(() => {
     const value = connected ? t('connected') : t('not_connected')
     return {
@@ -69,7 +80,11 @@ export function useSettingsTabScreenLogic() {
     let value = ''
     const item = ADDRESS_TYPES[currentKeyring.addressType]
     const hdPath = currentKeyring.hdPath || item.hdPath
-    if (currentKeyring.type === KeyringType.SimpleKeyring) {
+    if (
+      currentKeyring.type === KeyringType.SimpleKeyring ||
+      currentKeyringCapabilities.signMethod === AccountSignMethod.External ||
+      !currentKeyringCapabilities.canChangeAddressType
+    ) {
       value = `${item.name}`
     } else {
       value = `${item.name} (${hdPath}/${currentAccount.index})`
@@ -93,7 +108,7 @@ export function useSettingsTabScreenLogic() {
         nav.navigate('AddressTypeScreen')
       },
     }
-  }, [t, isCustomHdPath])
+  }, [t, isCustomHdPath, currentKeyring, currentAccount.index, currentKeyringCapabilities])
 
   const settings_advanced = useMemo(() => {
     return {

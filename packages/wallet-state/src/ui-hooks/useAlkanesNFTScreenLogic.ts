@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useI18n, useNavigation, useWallet } from 'src/context'
-import { useResetTxState } from 'src/hooks'
+import { useCurrentAccountCapabilities, useResetTxState } from 'src/hooks'
 
 export function useAlkanesNFTScreenLogic() {
   const nav = useNavigation()
@@ -9,6 +9,7 @@ export function useAlkanesNFTScreenLogic() {
   const { t } = useI18n()
 
   const resetTxState = useResetTxState()
+  const accountCapabilities = useCurrentAccountCapabilities()
 
   const [availableUtxo, setAvailableUtxo] = useState(0)
   const wallet = useWallet()
@@ -32,7 +33,7 @@ export function useAlkanesNFTScreenLogic() {
     })
   }
 
-  const disabledSend = availableUtxo <= 0
+  const disabledSend = !accountCapabilities.canCreateSigningRequest || availableUtxo <= 0
 
   return {
     alkanesInfo,

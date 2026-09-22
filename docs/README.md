@@ -7,6 +7,10 @@
 | [api/](./api/)           | dApp developers | `window.unisat` provider API reference |
 | [releases/](./releases/) | All             | Version changelogs and release history |
 
+## Maintenance
+
+- [Package Release Flow](./package-release.md)
+
 ## Quick Links
 
 - [Connect Extension](./api/connect-extension.md)

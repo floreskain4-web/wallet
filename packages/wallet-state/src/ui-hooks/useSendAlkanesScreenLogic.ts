@@ -39,6 +39,7 @@ export function useSendAlkanesScreenLogic() {
 
   const [availableBalance, setAvailableBalance] = useState(tokenBalance.amount)
   const [error, setError] = useState('')
+  const [enableRBF, setEnableRBF] = useState(true)
 
   const totalBalanceStr = useMemo(() => {
     return bnUtils.toDecimalAmount(tokenBalance.amount, tokenBalance.divisibility)
@@ -107,6 +108,12 @@ export function useSendAlkanesScreenLogic() {
 
   const wallet = useWallet()
 
+  useEffect(() => {
+    wallet.getEnableRBF().then(enableRBF => {
+      setEnableRBF(enableRBF)
+    })
+  }, [wallet])
+
   const prepareSendAlkanes = usePrepareSendAlkanesCallback()
   const pushBitcoinTx = usePushBitcoinTxCallback()
 
@@ -122,7 +129,8 @@ export function useSendAlkanesScreenLogic() {
         tokenBalance.alkaneid,
         bnUtils.fromDecimalAmount(inputAmount, tokenBalance.divisibility),
         feeRate,
-        'ft'
+        'ft',
+        enableRBF
       )
       if (toSignData) {
         transferData.current.toSignData = toSignData
@@ -164,6 +172,12 @@ export function useSendAlkanesScreenLogic() {
   const onSignPsbtHandleBack = () => {
     setStep(SendAlkanesScreenStep.CREATE_TX)
   }
+
+  const onEnableRBFChange = (value: boolean) => {
+    setEnableRBF(value)
+    wallet.setEnableRBF(value)
+  }
+
   return {
     step,
     t,
@@ -174,12 +188,14 @@ export function useSendAlkanesScreenLogic() {
     availableBalanceStr,
 
     inputAmount,
+    enableRBF,
     disabled,
     error,
 
     // actions
     setToInfo,
     setInputAmount,
+    setEnableRBF: onEnableRBFChange,
     onClickBack,
     onClickNext,
 
