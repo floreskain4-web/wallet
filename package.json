@@ -45,7 +45,7 @@
     "tiny-secp256k1": "^2.2.1",
     "tsup": "^7.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^0.34.0"
+    "vitest": "^5.0.1"
   },
   "engines": {
     "node": ">=20 <21",
