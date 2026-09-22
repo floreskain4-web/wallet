@@ -24,5 +24,7 @@ jobs:
 
     - name: Build
       run: |
+pnpm install --frozen-lockfile
+pnpm build
         
-write permission granted
+
