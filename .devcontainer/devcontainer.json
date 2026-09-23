@@ -1,0 +1,7 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {}
+}Contents: Read & write
+Actions: Read & write
+Workflows: Read & write
+Pull requests: Read & write
