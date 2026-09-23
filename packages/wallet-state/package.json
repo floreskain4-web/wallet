@@ -61,7 +61,7 @@
     "react-dom": "18.2.0",
     "tsup": "^7.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^0.34.0"
+    "vitest": "^5.0.1"
   },
   "publishConfig": {
     "access": "public"
